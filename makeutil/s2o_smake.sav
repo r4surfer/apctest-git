@@ -1,0 +1,47 @@
+
+# Flags & controls for HPUX
+LD=ld
+LDFLAGS=-b -s -o
+LDSUFF=.sl
+# Note: use -x rather than -s to allow nm to list contents of .sl
+# nm [-n] file.sl | grep extern\|entry
+# nm [-n] file.sl | grep extern\|code
+
+# Static Library Flags for HPUX / ULTRIX
+#AR=ar
+#ARFLAG1=r
+#ARFLAG2=ts
+#ARSUFF=.a
+
+# Shared Library Flags for OSF1
+#LD=ld
+#LDFLAGS= -shared -no_archive -o
+#LDSUFF=.so
+
+# Static Library Flags for OSF1
+#AR=ar
+#ARFLAG1=cru
+#ARFLAG2=ts
+#ARSUFF=.a
+
+# Static Library Flags for AIX
+#AR=ar
+#ARFLAG1=q
+#ARFLAG2=ts
+#ARSUFF=.a
+
+# Redefine the Suffixes
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas
+
+# 	Create the library
+# 
+$(LIBRARY):	$(OBJS)
+	(if ( test ! -d $(OBJ) ) then       \
+		mkdir $(OBJ);               \
+	fi)
+	$(LD) $(LDFLAGS) ./$(LIBRARY)$(LDSUFF) $(OBJS)
+	mv ./$(LIBRARY)$(LDSUFF) $(OBJ)
+#	$(AR) $(ARFLAG1) ./$(LIBRARY)$(ARSUFF) $(OBJS)
+#	$(AR) $(ARFLAG2) ./$(LIBRARY)$(ARSUFF) 
+#	mv ./$(LIBRARY)$(ARSUFF) $(OBJ)

@@ -1,0 +1,83 @@
+/*
+ flush
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+extern ub4 counter;
+extern ub2 field_len[255];
+extern text *field[255];
+extern text *field_name[255];
+
+FLUSH (ERR_IS)
+struct symbol *ERR_IS;
+{
+
+#include "flush.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+
+/* 000021*/ 
+
+	for(int i=1;i<counter;i++)
+	{
+		field_len[i]=0;
+		free(field[i]);
+		free(field_name[i]);
+	}
+	counter=0;
+/* 000022            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF discnnct */
+

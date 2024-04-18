@@ -1,0 +1,4 @@
+[ GENDER$ ] string variable used only once
+[ DEPENDANTS$ ] string variable used only once
+[ WEEKNAME$ ] string variable used only once
+[ TDATE$ ] string variable used only once

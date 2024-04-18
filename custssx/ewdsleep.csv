@@ -1,0 +1,79 @@
+/*
+ ewdsleep: Fri Mar  5 11:08:00 1999
+ */
+
+#include <unistd.h>
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+EWDSLEEP (TIME_IS, ERR_IS)
+struct symbol *TIME_IS;
+struct symbol *ERR_IS;
+{
+
+#include "ewdsleep.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static long DIFF_is;
+static struct symbol DIFF_IS ={(long) 4, (char *) &DIFF_is, 4, 0, 0, 0, 4, 4};
+static struct symbol *allvar[]={
+&DIFF_IS,
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+static int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *TIME_is;
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (TIME_IS != NULL))
+		TIME_is = (long *) *( (long *) TIME_IS + 1);
+	if ((Call_args >= 2) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001sub "APCSLEEP" (time%, err%)*/ 
+/* 000002*/ 
+
+/* go to sleep for time seconds */
+        g_ind0=sleep(*(TIME_is));
+
+	g_ind0 = (*(TIME_is) -  g_ind0);
+/* 000006end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF apcsleep */

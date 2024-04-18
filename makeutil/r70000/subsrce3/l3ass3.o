@@ -1,0 +1,12 @@
+cmsmachk.o
+glprtsub.o
+hnyavail.o
+hnyexsub.o
+hnymvmf.o
+hnymvmt.o
+mdmccost.o
+openolib.o
+servalid.o
+stcrte.o
+whichper.o
+zaskstrn.o

@@ -1,0 +1,9 @@
+#	b_cgen Subroutine makefile
+# This makefile is for SUB Object exclusively
+#
+# Combines .o objects into .sl or .a load module
+
+# Define the Destination for the Archive or Shared Library
+OBJ=../load1
+
+# Define the Current Load Module

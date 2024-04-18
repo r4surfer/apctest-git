@@ -1,0 +1,15 @@
+Instructions for creating plowcode.c.sav from plowcode.save (= plowcode.bas)
+
+1. cp plowcode.save plowcode.bas
+2. B_Cgen plowcode
+3. rm plowcode.bas (important!)
+4. rm plowcode.h (should be empty!)
+5. vi plowcode.c
+5a.  comment /* #include "plowcode.h" */
+5b.  comment /* Call_args = 15; */ immediately prior to ZPLOWCOD
+5c.  :wq
+6. mv plowcode.c  plowcode.c.sav
+
+This needs to be done in the unlikely event that plowcode.bas changes
+or if B_Cgen changes.  Special handling may be required for OSF1.
+

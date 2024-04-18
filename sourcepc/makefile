@@ -1,0 +1,119 @@
+#	b_cgen makefile 
+#
+# makefile for 'c' generation, COMPILE and Linkage of Source Programs!
+
+# Set up the variables
+include ../optcode
+CFLAGS=-Ae $(OPTCODE) -D_HPUX_SOURCE
+LD=ld
+#LDFLAGS= +s -a archive_shared +b :
+LDFLAGS= +s +b :
+
+
+# Location for the stored objects to be shipped.
+OBJ=../object2
+
+# Extra object files for routines that MUST be explicitly loaded
+EXT_OBJ=../load2/cuserid.o /opt/langtools/lib/crt0.o
+
+# b_cgen, wisp & disam load modules
+
+CMS_LIB=-lasm -lscrn -lfile -lmat -lwb -lutil -lcmath -lutil -lasm -ldisam \
+-ldewisp
+
+# Christie - Added for Oracle -lclntsh
+# System libraries
+# M_LIB=-lcurses -lm -lc -ldld -lclntsh
+M_LIB=-lcurses -lm -lc -ldld
+
+# CMS Subroutine load libraries
+
+CMSSUB_LIBX= \
+  -ll1asr2       -ll1ass2       -ll1ass3       -ll1bss2       -ll1css2        \
+  -ll1dss2       -ll1ess2       -ll2asr2       -ll2asr3       -ll2ass2        \
+  -ll2ass3       -ll2bss2       -ll2css2       -ll3asr2       -ll3ass2        \
+  -ll3ass3       -ll4asr2       -ll4asr3       -ll4ass2       -ll4ass3        \
+  -ll5asr2       -ll5asr3       -ll5ass2       -ll5ass3       -ll6asr3        \
+  -ll6ass2       -ll6ass3       -ll7asr3       -ll7ass3       -ll8asr3        \
+  -ll8ass3       -ll9asr2       -ll9ass3       -llaasr3       -llaass2        \
+  -llaass3       -llbass3       -llcass3       -lldasr2       -lldasr3        \
+  -lldass2       -lldass3       -llpacss       -llxacss       
+
+CMSSUB_LIB=$(CMSSUB_LIBX) $(CMSSUB_LIBX) $(CMSSUB_LIBX) $(CMSSUB_LIBX)
+
+# Define the Combined Parameters
+
+CMSPATH= \
+/cms2/apctest1
+
+CMS_IFLAGS=-I$(CMSPATH)/include1
+BC_IFLAGS=-I$(CMSPATH)/include2
+CMSSUB_DIR=-L$(CMSPATH)/load1
+CMS_DIR=-L$(CMSPATH)/load2
+# Christie - Added for Oracle
+# CMSOR_DIR=-L$\/oracle/product/9.2.0/lib32
+# OR_IFLAGS=-I$\/oracle/product/9.2.0/rdbms/demo
+# ORA_IFLAGS=-I$\/oracle/product/9.2.0/rdbms/public
+
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS) $(OR_IFLAGS) $(ORA_IFLAGS)
+# Christie - Added for Oracle - Addes CMSOR_DIR
+# LD_DIRS=$(CMSSUB_DIR) $(CMS_DIR) $(CMSOR_DIR)
+LD_DIRS=$(CMSSUB_DIR) $(CMS_DIR)
+LD_LIBS=$(CMSSUB_LIB) $(CMS_LIB) $(M_LIB)
+
+COMPILE=../b_cgen
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+#	Define the steps from .bas to executable
+.bas:
+	@echo  == Using .bas to executable rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+	strip $(OBJ)/$@
+	rm -f ./$@.?
+
+# Define the steps from .c to executable
+.c:
+	@echo  == Using .c to executable rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+	strip $(OBJ)/$@
+
+#       Define the steps from .csv to executable
+.csv:
+	@echo  == Using .csv to executable rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.csv >> ./$*.c
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+	strip $(OBJ)/$@
+	rm -f ./$@.?
+
+#       Define the steps from .c.sav to executable
+.c.sav:
+	@echo  == Using .c.sav to executable rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.c.sav >> ./$*.c
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+	strip $(OBJ)/$@
+	rm -f ./$@.?
+
+all:	target	\
+  jmtdprnt       jobjurn1       jobtojob       prjcomit       prjinput        \
+  prjlbrpr       prjpickl       prjpurge       prjpurpr       prjsalpr        \
+  prjwrkpr       
+
+target:
+	(if ( test ! -d $(OBJ) ) then       \
+		mkdir $(OBJ);               \
+	fi)
+
+
+clean:
+	rm -f ./*.? ./core

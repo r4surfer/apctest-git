@@ -1,0 +1,154 @@
+/*
+ fieldinf: Thu Apr  4 15:18:34 2002
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+	/* Storage for 50 fields */
+extern OCIInd cmg[255];
+extern ub2 field_len[255];
+extern text *field[255]; 
+extern text *field_name[255];
+
+FIELDINF (FIELD_NO_IS, FIELD_TS, NAME_TS, LEN_IS, ERR_IS)
+struct symbol *FIELD_NO_IS;
+struct symbol *FIELD_TS;
+struct symbol *NAME_TS;
+struct symbol *LEN_IS;
+struct symbol *ERR_IS;
+{
+
+#include "fieldinf.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *FIELD_NO_is;
+	long *LEN_is;
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (FIELD_NO_IS != NULL))
+		FIELD_NO_is = (long *) *( (long *) FIELD_NO_IS + 1);
+	if ((Call_args >= 4) && (LEN_IS != NULL))
+		LEN_is = (long *) *( (long *) LEN_IS + 1);
+	if ((Call_args >= 5) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * FIELDINF - Return fields from Result Set.                 *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "FIELDINF" ( field_no%,        :: Field No to Fetch   ::~*/ 
+/* 000021                              field$,           :: Actual String Field ::~*/ 
+/* 000022                              name$,            :: Name of Field       ::~*/ 
+/* 000023                              len%,             :: Max of Length of Fld::~*/ 
+/* 000024                              err% )            :: 0% = OK             ::*/ 
+/* 000025*/ 
+
+
+if (cmg[*FIELD_NO_is] != -1)
+{
+	str_asgn ((char *)field[*FIELD_NO_is], (long) strlen((char *)field[*FIELD_NO_is]) , 
+		(char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+	str_asgn ((char *)field_name[*FIELD_NO_is], (long) strlen((char *)field_name[*FIELD_NO_is]) , 
+		(char *)(NAME_TS->p), (long)(NAME_TS->len));
+
+	*LEN_is=field_len[*FIELD_NO_is];
+	*ERR_is=0;
+}
+else
+{
+	str_asgn ((char *)" ", (long) strlen((char *)field[*FIELD_NO_is]) , 
+		(char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+	str_asgn ((char *)field_name[*FIELD_NO_is], (long) strlen((char *)field_name[*FIELD_NO_is]) , 
+		(char *)(NAME_TS->p), (long)(NAME_TS->len));
+
+	*LEN_is=field_len[*FIELD_NO_is];
+	*ERR_is=0;
+}
+
+/* printf("\nGETFIELD FIELD_NO_IS %d \n", *FIELD_NO_IS); */
+/* printf("\nCMG FIELD_NO %d \n", cmg[*FIELD_NO_is]);    */
+/* printf("\nFIELD_TS %s \n", (char *)(FIELD_TS->p));    */
+/* printf("\nGETFIELD ERROR_IS %s \n", ERR_IS);          */
+
+/*
+
+        printf(" \n I am NOT in this routine!!  \n ");
+
+if (cmg[*FIELD_NO_is] == -1)
+{
+        printf(" \n I am in this routine!!  \n ");
+	str_asgn ((char *)" ", (long) strlen((char *)field[*FIELD_NO_is]) , 
+		(char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+	str_asgn (" ", (long)(FIELD_TS->len) , (char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+
+}
+
+*/
+
+
+/* 000028*/ 
+/* 000029            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF fieldinf */
+

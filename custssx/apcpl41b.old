@@ -1,0 +1,264 @@
+        REM *************************************************************~
+            *                                                           *~
+            *  Program Name      - APCPL41B - Program (APCPL41A)        *~
+            *  Creation Date     - 07/24/96 - Barcode File - (APCBARPD) *~
+            *  Last Modified Date- 03/09/98                             *~
+            *  Written By        - Royal H. Hoffman                     *~
+            *                                                           *~
+            *  Description       - Print New Barcode labels, Using the  *~
+            *                      New Planning format and Label.       *~
+            *                                                           *~
+            *                    - 'STUFF%' is Set to the Number of     *~
+            *                               Dummy Labels needed at the  *~
+            *                               Beginning and End of the    *~
+            *                               Label Print run.            *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 07/24/96 ! New Program for (APC) - Last Mod Date    ! RHH *~
+            * 09/09/96 ! Mod to put Shift and Process Code on     ! RHH *~
+            *          !   Label.                                 !     *~
+            * 12/06/96 ! Mod to support new 6 x 2 7/8 Label       ! JBF *~
+            * 04/03/97 ! Mod to Support New Series Naming of      ! RHH *~
+            *          !   Products.                              !     *~
+            * 11/14/97 ! Mod for Upgrade to Release R6.04.03      ! RHH *~
+            * 11/21/97 ! Mod Add Product Series and S.O. to the   ! RHH *~
+            *          !   Warranty Stub. Also Add Job Name to    !     *~
+            *          !   Line 5 of the Label.                   !     *~
+            *************************************************************
+
+         sub "APCPL41B" (apcbar$,upccode$,custname$,custno$,cmpdte$,     ~
+                         loc$,state$,po$,load$,drop$,ref$,shpdte$,stock$,~
+                         part$,dept$,partdesc$,text$(),width$,height$,   ~
+                         skuno$, route$, pd_dept$, seq_no$, prv$, s_23$, ~
+                         job_name$)
+        dim                                                              ~
+            s_23$8,                      /* New Series Definition      */~
+            apcbar$18,                   /* APC Standard Barcode       */~
+            upccode$11,                  /* UPC Barcode or'00000000000'*/~
+            custname$30,                 /* Customer Name              */~
+            custno$9,                    /* Customer Number            */~
+            cmpdte$8,                    /* Completion Date            */~
+            dept$25,                     /* Deparment Description      */~
+            drop$2,                      /* Drop Number                */~
+            height$6,                    /* Product Height             */~
+            job_name$16,                 /* Job Name                   */~
+            load$5,                      /* Load Number                */~
+            loc$18,                      /* Location - City            */~
+            part$25,                     /* Part Number                */~
+            partdesc$60,                 /* Part Description           */~
+            pd_dept$3,                   /* Department Code (3)        */~
+            po$28,                       /* Purchase Order Number (16) */~
+            prv$15,                      /* Private Label Text         */~
+            ref$8,                       /* Reference Number           */~
+            route$5,                     /* Route Code                 */~
+            rslt$24,                     /* Control File Definition    */~
+            seq_no$5,                    /* Seq. No.                   */~
+            shpdte$8,                    /* Ship Date and Indicator    */~
+            skuno$20,                    /* SKU Number                 */~
+            state$2,                     /* State Code                 */~
+            text$(2%)70,                 /* Line Item Text String      */~
+            width$7,                     /* Product Width              */~
+            stock$5,                     /* Stock Indicator            */~
+            a1$18, a2$8, a3$11, a4$5, a5$15, a6$1, /* Float Fields     */~
+            l1$55,                                 /* Line 1           */~
+            l2$55,                                 /* Line 2           */~
+            l3$55,                                 /* Line 3           */~
+            l4$55,                                 /* Line 4           */~
+            l5$47,                                 /* Line 5           */~
+            l6$55,                                 /* Line 6           */~
+            l7$55,                                 /* Line 7           */~
+            l8$55,                                 /* Line 8           */~
+            l9$55,                                 /* Line 9           */~
+            l13$26,                                /* Line 13          */~
+            l14$26                                 /* Line 14          */
+
+            init(" ") a1$, a2$, a3$, a4$, a5$, a6$, l1$, l2$, l3$, l4$,  ~
+                      l5$, l6$, l7$, l8$, l9$, l13$, l14$
+
+            str(rslt$,1%,6%)  = "OUTPUT"   /* Set So File Cannot Exist */
+            str(rslt$,7%,8%)  = "00005000" /* Create for ? No. Records */
+            str(rslt$,15%,3%) = "100"      /* Dpack Percentage         */
+            str(rslt$,18%,3%) = "100"      /* Ipack Percentage         */
+
+        REM *************************************************************~
+            *                 I N I T I A L I Z E                       *~
+            *************************************************************
+            if beenherebefore% <> 1% then goto create_open
+            label%     = label% + 1%
+            goto create_label
+
+        create_open                      /* Only do the 1st Time      */
+            select #1, "APCBARPD", consec, recsize = 628
+            call "OPENFILE" (#1, "OUTPT", 0%, rslt$, " " )
+            beenherebefore% = 1%
+            label%          = 1%
+            stuff%          = 1%
+            gosub stuff_label            /* Create Dummy Label Begin   */
+
+        create_label
+            gosub format_label
+
+            if apcbar$ <> "END OF LABELS" then goto create_print
+            stuff%          = 1%         /* Only do when Finished with */
+            gosub stuff_label            /* Printing the Labels.       */
+            close #1                     /* Close Out with Dummy Labels*/
+
+            beenherebefore% = 0%
+            goto exit_program
+
+        create_print
+            gosub print_label
+
+        exit_program
+        end
+
+        REM *************************************************************~
+            *             L A B E L   S U B R O U T I N E S             *~
+            *************************************************************
+        print_label
+            put #1,using L01480,                                           ~
+                "{1``",                            /* Label Def.   ( 4)*/~
+                a5$, "`",                          /* Prv. Lbl. Txt(16)*/~
+                a2$, "`",                          /* Model / Series(9)*/~
+                a1$, "`",                          /* EWD Barcode  (19)*/~
+                l1$, "`",                          /* Line 1       (56)*/~
+                l2$, "`",                          /* Line 2       (56)*/~
+                l3$, "`",                          /* Line 3       (56)*/~
+                l4$, "`",                          /* Line 4       (56)*/~
+                l5$, "`",                          /* Line 5       (48)*/~
+                l6$, "`",                          /* Line 6       (56)*/~
+                l7$, "`",                          /* Line 7       (56)*/~
+                l8$, "`",                          /* Line 8       (56)*/~
+                l13$,"`",                          /* Line 13      (27)*/~
+                l14$,"`",                          /* Line 14      (27)*/~
+                a3$, "`",                          /* UPC Code     (12)*/~
+                a6$, "`",                          /* Wood Flag    ( 2)*/~
+                l9$, "`",                          /* Line 9       (56)*/~
+                a4$, "`",                          /* Stock Indicat( 6)*/~
+                "}"                                /* End of Label ( 1)*/
+            write #1, eod goto error_sub
+
+        return
+        error_sub
+            call "SHOSTAT" ("Error-With Barcode ("&apcbar$&")")
+            stop
+        return
+
+L01480:     FMT CH(4),                             /* Label Def.   ( 4)*/~
+                CH(15), CH(1),                     /* Prv. Lbl. Txt(16)*/~
+                CH(8),  CH(1),                     /* Model/SERIES ( 9)*/~
+                CH(18), CH(1),                     /* APC Barcode  (19)*/~
+                CH(55), CH(1),                     /* Line 1       (56)*/~
+                CH(55), CH(1),                     /* Line 2       (56)*/~
+                CH(55), CH(1),                     /* Line 3       (56)*/~
+                CH(55), CH(1),                     /* Line 4       (56)*/~
+                CH(47), CH(1),                     /* Line 5       (48)*/~
+                CH(55), CH(1),                     /* Line 6       (56)*/~
+                CH(55), CH(1),                     /* Line 7       (56)*/~
+                CH(55), CH(1),                     /* Line 8       (56)*/~
+                CH(26), CH(1),                     /* Line 13      (27)*/~
+                CH(26), CH(1),                     /* Line 14      (27)*/~
+                CH(11), CH(1),                     /* UPC Code     (12)*/~
+                CH(1),  CH(1),                     /* Wood Flag    ( 2)*/~
+                CH(55), CH(1),                     /* Line 9       (56)*/~
+                CH(5),  CH(1),                     /* Stock Indicat( 6)*/~
+                CH(1)                              /* End of Label ( 1)*/
+        REM                                        /* Total Bytes= 619 */
+        REM                                        /* Output File= 628 */
+
+        stuff_label
+            for kk% = 1% to stuff%
+           a5$ ="XXXXXXXXXXXXXXX"                       /* Prv Lbl Text*/
+           a2$ ="XXXXXXXX"                              /* MODEL/SERIES*/
+           a1$ ="000000000000000000"                    /* EWD BARCODE */
+           l1$ ="LOAD: XXXXX   DROP: XX   DEPT: XXX  SH: XX  W/F: XXXXXX"
+           l2$ ="P.O.: XXXXXXXXXXXXXXXX   S.O.: XXXXXXXX  MAKE: XX/XX/XX"
+           l3$ ="CUST: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX   CUSTNO: XXXXXX  "
+           l4$ ="XXXXXXXXXXXXXXXXXX  XX    RTE: XXXXX    SEQNO: XXXXX   "
+           l5$ ="PART: XXXXXXXXXXXXXXXXXXXXXXXXX JOB: XXXXXXXXXX"
+           l6$ ="WID.: XXXXXXX  HGT.: XXXXXX   SKU: XXXXXXXXXXXXXXXXXXXX"
+           l7$ ="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           l8$ ="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           l13$= "SER: XXXXXXXX ID: XXXXXXXX"         /* Line One Stub */
+           l14$= "XXXXXXXX    S.O.: XXXXXXXX"         /* Line Two Stub */
+           a3$ = "00000000000"
+           a6$ = " "                                  /* Wood Flag     */
+           l9$ ="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+           a4$ ="XXXXX"                               /* STOCK         */
+                gosub print_label
+
+            next kk%
+        return
+
+        format_label
+           a5$=  prv$
+           a2$=  "  " & str(part$,1%,3) & "   "
+           if len(s_23$) > 2 then a2$ = s_23$
+
+           a1$=  apcbar$
+
+           l1$= "LOAD: XXXXX   DROP: XX   DEPT: XXX  SH: XX  W/F: XXXXXX"
+                 str(l1$, 7%, 5%) = load$
+                 str(l1$,21%, 2%) = drop$
+                 str(l1$,32%, 3%) = pd_dept$
+                 str(l1$,41%, 2%) = str(po$,23%,2%)     /* SHIFT CODE */
+              if str(apcbar$,1%,1%) = "S" then goto L02080
+                 if str(po$,17%, 1%)<> "N" then goto L02100
+L02080:             str(l1$,45%,11%) = "           "   : a6$ = " "
+                    goto L02120
+L02100:             str(l1$,50%, 6%) = str(po$,17%,6%) : a6$ = "W"
+
+L02120:    l2$= "P.O.: XXXXXXXXXXXXXXXX   S.O.: XXXXXXXX  MAKE: XX/XX/XX"
+                 str(l2$, 7%,16%) = str(po$, 1%,16%)
+                 str(l2$,32%, 8%) = str(apcbar$,1%,8%)
+                 str(l2$,48%, 8%) = cmpdte$
+
+           l3$= "CUST: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX   CUSTNO: XXXXXX  "
+                 str(l3$, 7%,30%) = custname$
+                 str(l3$,48%, 6%) = str(custno$,1%,6%)
+
+           l4$= "XXXXXXXXXXXXXXXXXX  XX    RTE: XXXXX    SEQNO: XXXXX   "
+                 str(l4$, 1%,18%) = loc$
+                 str(l4$,21%, 2%) = state$
+                 str(l4$,32%, 5%) = route$
+                 str(l4$,48%, 5%) = seq_no$
+
+           l5$= "PART: XXXXXXXXXXXXXXXXXXXXXXXXX JOB: XXXXXXXXXX"
+                 str(l5$, 7%,25%) = part$
+                 if len(job_name$) < 3 then job_name$ = "          "
+                 str(l5$,38%,10%) = str(job_name$,1%,10%)
+
+           l6$= "WID.: XXXXXXX  HGT.: XXXXXX   SKU: XXXXXXXXXXXXXXXXXXXX"
+                 str(l6$, 7%, 7%) = width$
+                 str(l6$,22%, 6%) = height$
+                 if len(skuno$) < 3 then skuno$ = "                    "
+                 str(l6$,36%,20%) = str(skuno$,1%,20%)
+
+           l7$= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                 l7$ = str(text$(1%),1%,55%)
+                 if len(text$(1%)) < 4 then                              ~
+           l7$= "                                                       "
+
+           l8$= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                 l8$ = str(text$(2%),1%,55%)
+                 if len(text$(2%)) < 4 then                              ~
+           l8$= "                                                       "
+
+           l13$= "SER: XXXXXXXX ID: XXXXXXXX"         /* Line One Stub */
+                 str(l13$,6%,8%) = s_23$              /* Series Name   */
+                 str(l13$,19%,8%)= ref$               /* Warranty Code */
+
+           l14$= "XXXXXXXX    S.O.: XXXXXXXX"         /* Line Two Stub */
+                 str(l14$,1%,8%) = cmpdte$            /* Complete Date */
+                 str(l14$,19%,8%)= str(apcbar$,1%,8%) /* Sales Order   */
+
+           a3$= "00000000000"
+              if str(upccode$,1%,1%) <> " " then a3$ = upccode$
+
+           l9$= "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX      "
+                 str(l9$, 1%,55%) = str(partdesc$,1%,55%)
+                 if len(partdesc$) < 4 then                              ~
+           l9$= "                                                       "
+           a4$=  stock$
+        return

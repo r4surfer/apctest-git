@@ -1,0 +1,48 @@
+
+INCPATH=-I../
+CMS_IFLAGS=$(INCPATH)include1
+BC_IFLAGS=$(INCPATH)include2
+
+# Combined Include Directories
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+
+COMPILE=../b_cgen
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+#	Define the steps from .bas to .o
+.bas:
+	@echo  == Using .bas to .o rule  ==
+	$(COMPILE) ./$*
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+# Define the steps from .c to .o
+.c:
+	@echo  == Using .c to .o rule  ==
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+
+#	Define the steps from .csv to .o
+.csv:	
+	@echo  == Using .csv to .o rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.csv >> ./$*.c
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+#	Define the steps from .c.sav to .o
+.c.sav:	
+	@echo  == Using .c.sav to .o rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.c.sav >> ./$*.c
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+all:	target	\

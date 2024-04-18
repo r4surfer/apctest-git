@@ -1,0 +1,66 @@
+[ ERROR$ ] string variable used only once
+[ L35410 ] decimal variable used only once
+[ TAXRATE ] decimal variable used only once
+[ HDMET ] decimal variable used only once
+[ HDIDX ] decimal variable used only once
+[ ORAQTY_ORDR ] decimal variable used only once
+[ ORACLE_CONNECT ] decimal variable used only once
+[ ORACLE_DISCNNCT ] decimal variable used only once
+[ CNT$ ] string variable used only once
+[ TAXRATE ] decimal variable used only once
+[ HDMET ] decimal variable used only once
+[ HDIDX ] decimal variable used only once
+[ ORAQTY_ORDR ] decimal variable used only once
+[ ORACLE_CONNECT ] decimal variable used only once
+[ ORACLE_DISCNNCT ] decimal variable used only once
+[ TAXRATE ] decimal variable used only once
+[ HDMET ] decimal variable used only once
+[ HDIDX ] decimal variable used only once
+[ ORAQTY_ORDR ] decimal variable used only once
+[ ORACLE_CONNECT ] decimal variable used only once
+[ ORACLE_DISCNNCT ] decimal variable used only once
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cc: "discnnct.c", line 96: warning 562: Redeclaration of "cleanup" with a different storage class specifier: "cleanup" will have internal linkage.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include1/cmsdefs.h", line 34: warning 2001: Redefinition of macro max.
+cpp: "../include1/cmsdefs.h", line 35: warning 2002: Redefinition of param names for macro min.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.

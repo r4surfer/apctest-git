@@ -1,0 +1,5 @@
+checkgui.o
+ddgetopt.o
+gencons.o
+genrpsec.o
+genrscsb.o

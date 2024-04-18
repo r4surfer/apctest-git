@@ -1,0 +1,6 @@
+[ L10495 ] decimal variable used only once
+[ MARKUPS ] decimal variable used only once
+[ FILLER2$ ] string variable used only once
+[ PRICE ] decimal variable used only once
+[ CMS2V$ ] string variable used only once
+[ USAGE_CAPTURE ] decimal variable used only once

@@ -1,0 +1,110 @@
+/*
+ getfield: Thu Apr  4 15:18:26 2002
+ */
+
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+extern text *field[255]; 
+
+
+GETFIELD (FIELD_NO_IS, FIELD_TS, ERR_IS)
+struct symbol *FIELD_NO_IS;
+struct symbol *FIELD_TS;
+struct symbol *ERR_IS;
+{
+
+#include "getfield.h"
+
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *FIELD_NO_is;
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (FIELD_NO_IS != NULL))
+		FIELD_NO_is = (long *) *( (long *) FIELD_NO_IS + 1);
+	if ((Call_args >= 3) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * GETFIELD - Return fields from Result Set.                 *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "GETFIELD" ( field_no%,        :: Field No to Fetch   ::~*/ 
+/* 000021                              field$,           :: Actual String Field ::~*/ 
+/* 000022                              err% )            :: 0% = OK             ::*/ 
+/* 000023*/ 
+/* 000024            dim field$256                       :: Actual String Field ::*/ 
+/* 000025*/ 
+/* 000026*/ 
+
+str_asgn (" ", (long) 1 , (char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+str_asgn ((char *)field[*FIELD_NO_is], (long) strlen((char *)field[*FIELD_NO_is]) , 
+		(char *)(FIELD_TS->p), (long)(FIELD_TS->len));
+
+/*strcpy((char *)result,(char *)field[FIELD_NO_is]);*/
+/* 000027            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF getfield */
+

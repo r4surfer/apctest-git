@@ -1,0 +1,27 @@
+# makefile prototype used to create a makefile
+# which produces individual makefiles and master
+# makefile for subsrcxx_o library
+# (Convoluted & confusing, right)
+#
+# Redefine the Suffixes
+.SUFFIXES:
+.SUFFIXES:      .a .o .c .bas
+
+# o to ex
+.o:
+	@echo  ===== creating makefiles =====
+	touch ./tmpmake1
+	cat ../s1o_smake >> ./tmpmake1
+	@echo "\nLIBRARY =  \\" >> ./tmpmake1
+	@echo lib$* >> ./tmpmake1
+	@echo "\nOBJS= \\" >> ./tmpmake1
+	../genlist -i$*.o -so -x.o
+	cat ./tmpmake1 ./flist2.txt > ./tmpmake2
+	cat ./tmpmake2 ../s2o_smake > ../make$*
+	rm ./tmpmake? ./flist*
+	@echo  "\t make -f ./make$* 2> ./$*err" >> ./allmake
+
+#       Create the library
+#
+
+all: \

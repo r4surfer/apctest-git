@@ -1,0 +1,61 @@
+	$(CMS_PATH)
+
+# System libraries
+M_LIB=-lcurses -lm -lc -ldld
+
+# Define the Combined Parameters
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+LD_DIRS=$(CMSSUB_DIR) $(CMS_DIR)
+LD_LIBS=$(CMSSUB_LIB) $(CMS_LIB) $(M_LIB)
+
+#Current b_cgen location 
+#Note: -f embeds basic source in generated c as comments, aids debugging
+
+COMPILE=$(CMS_PATH)/b_cgen -f
+
+#Desired location of executable file, (Intermediates (c,h,o) stay in source lib)
+#Provided is 'here'.
+
+OBJ=./
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas
+
+#	Define the steps from .bas to .c
+.bas.c:	
+	@echo  == Using .bas to .c rule  ==
+	$(COMPILE) ./$*
+
+#	Define the steps from .bas to .o
+.bas.o:	
+	@echo  == Using .bas to .o rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+
+#	Define the steps from .bas to executable
+.bas:
+	@echo  == Using .bas to executable rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+# Define the steps from .c to .o
+.c.o:
+	@echo  == Using .c to .o rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+
+# Define the steps from .c to executable
+.c:
+	@echo  == Using .c to executable rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+# Define the steps from .o to executable
+.o:
+	@echo  == Using .o to executable rule  ==
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+all:
+
+clean:
+	rm -rf ./*.x ./*.b ./*.d ./core

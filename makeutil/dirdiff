@@ -1,0 +1,94 @@
+#!/usr/bin/csh
+
+# Routine to Compare files within directories
+#
+
+if ( ! ($1 == '' )) then
+	set target1 = $1
+	if ( ! ($2 == '' )) then
+		set target2 = $2
+	else
+		set target2 = ''
+	endif
+else
+	set target1 = ''
+	set target2 =''
+endif
+
+set resp = 99
+while ($resp == 99)
+	echo ' '
+	echo 'Compare Directories - Directory 1 path'
+	echo ' '
+	echo ' Enter full path for directory 1'
+	echo ' Default:'
+	if ($target1 == '') then
+		echo '[no valid path set]'
+	else
+		echo $target1
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set target1 = $opresp
+	endif
+	if ( ! -d $target1 ) then
+		set target1 = ''
+	else
+		set resp = 0
+	endif
+end
+
+set resp = 99
+while ($resp == 99)
+	echo ' '
+	echo 'Compare Directories - Directory 2 path'
+	echo ' '
+	echo ' Enter full path for directory 2'
+	echo ' Default:'
+	if ($target2 == '') then
+		echo '[no valid path set]'
+	else
+		echo $target2
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set target2 = $opresp
+	endif
+	if ( ! -d $target2 ) then
+		set target2 = ''
+	else
+		set resp = 0
+	endif
+end
+
+echo '\n'
+ls $target1 > ./tmpcomp1.txt
+
+foreach file (`cat tmpcomp1.txt`)
+	if (-f $target2/$file) then
+		diff $target1/$file $target2/$file >> ./d_$file
+		if ( -z ./d_$file) then 
+			rm -f ./d_$file
+			echo $file' no differences detected' >> ./d_summ
+		else 
+			echo $file' difference list produced' >> ./d_summ
+		endif
+	else
+		echo $file' not found in '$target2 >> ./d_summ
+	endif
+end
+
+ls $target2 > ./tmpcomp1.txt
+echo "\n"$target2"\n" >> ./d_summ
+
+foreach file (`cat tmpcomp1.txt`)
+	if (-f $target1/$file) then
+		echo $file' compared' >> ./d_summ
+	else
+		echo $file' not found in '$target1 >> ./d_summ
+	endif
+end
+
+rm tmpcomp?.*
+exit
+

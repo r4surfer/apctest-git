@@ -1,0 +1,60 @@
+#	b_cgen makefile
+# makefile for 'c' generation, COMPILE and Linkage of Source Programs!
+#  Exclusive for programs in Utility Source
+
+
+# Set up the variables
+include ../makeutil/optcode
+CFLAGS=-Ae $(OPTCODE) -D_HPUX_SOURCE
+#CFLAGS=-Aa -D_HPUX_SOURCE
+
+# Location for the stored objects to be shipped.
+OBJ=../utilsrce_o
+
+INCPATH=-I../
+CMS_IFLAGS=$(INCPATH)include1
+BC_IFLAGS=$(INCPATH)include2
+
+# Combined Include Directories
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+
+COMPILE=../b_cgen
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+# Define the steps from .bas to executable
+.bas:
+	@echo  == Using .bas to executable rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+# Define the steps from .c to executable
+.c:
+	@echo  == Using .c to executable rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+
+#	Define the steps from .csv to executable
+.csv:	
+	@echo  == Using .csv to executable rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.csv >> ./$*.c
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+#	Define the steps from .c.sav to executable
+.c.sav:	
+	@echo  == Using .c.sav to executable rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.c.sav >> ./$*.c
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+all:	target	\

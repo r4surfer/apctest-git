@@ -1,0 +1,252 @@
+
+Co*STAR with the Caelus Windows Client			Revision 1.0
+
+Setup Guide
+
+
+
+INTRODUCTION
+
+The following are the steps required to install/upgrade Co*STAR and the Caelus Windows Client (CWC) to version 3.0 which operates exclusively with the installed CMS version R7.00.00.  If Co*STAR is currently in use at your site it will not be necessary to install it again, simply follow all instructions for installing the CWC.
+
+This document contains only the pertinent information for installation of Co*STAR and CWC.  The user may wish to view/print the Co*STAR with the Caelus Windows Client User's Guide which contains full documentation using Word Viewer or Microsoft Word 6.0 (or higher).  The document file name is cmswcusg2.doc, which is located in the cms_word\cwc_docs directory.
+
+
+
+INSTALLING SOFTWARE UPDATES
+
+The following provides an overview of update installation.  Complete details of the installation process for both Co*STAR and Caelus Windows Client are following the update overviews.
+
+
+Installing Co*STAR Updates
+
+Installing a Co*STAR update is the same process as performing an original install - except that no license information is transferred.  To install a Co*STAR release update, please perform the following steps:
+
+1) Make a backup copy of your current Costar directory.  You will need this to copy some files back into the CoStar directory after running the update.
+2) If updating a server Co*STAR installation perform the following steps from the same PC the server software was originally installed from.
+3) From either the Co*STAR update diskette, or a directory where you downloaded an update to, run the INSTALL.EXE program.
+4) When asked, supply the same drive/directory where the current Co*STAR software is installed and select OK.  The install program will then proceed to update Co*STAR components.
+5) When installation is complete, restore (copy) from your backup Costar directory the files Costar.bmp and Costar16.bmp, overlaying the versions installed by the update.
+6) Test the changes to ensure everything works correctly.
+
+
+Installing CWC Updates
+
+Installing a CWC update is the same process as performing an original install.  We do suggest that you perform the following steps to protect any changes/customizations, which you may have made.
+
+1) Make a backup copy of your current Costar directory and all sub-directories.
+2) Reinstall/update the CWC software by running SETUP.EXE from the installation media provided.  Answer the install questions as if performing the first install.
+3) After the install/update is complete, from your backup restore/copy any customized *.key, *.tbf, or *.hsf files back into the costar/caelus directory.  If you had customized any of the icon or bit map files restore/copy those files back into the costar/caelus/images directory.
+4) Test the changes to ensure that everything works correctly.
+
+
+
+INSTALLATION
+
+The following installation instructions require Microsoft Windows to be installed on the PC.
+
+For the Co*STAR and CWC Client software there are several configuration options to choose from depending on whether you purchased a Server version or stand-alone PC version of Co*STAR.  Depending on which one was purchased you will want to choose the appropriate installation procedure listed below.
+
+Note:  You should be aware that each Co*STAR installation disk has a limited number of licenses encoded on it.  The diskette(s) cannot be copied without invalidating the encryption.  Each time you successfully install a new copy of Co*STAR from the installation disk the number of remaining licenses or installs is decreased by 1.  Always use the uninstal.exe program to remove/recover a license before deleting Co*STAR from a PC, please refer to the section on Un-Installing Co*STAR.
+
+
+
+NETWORK FILE SERVER INSTALLATION STEPS
+
+The following is the procedure to follow for a file server installation of Co*STAR and CWC.  In a file server installation the majority of the software resides on a file server somewhere on the network.  Only files, which may need to be user specific, remain on the local PC's disk drive.
+
+
+NETWORK FILE SERVER INSTALLATION STEPS - Co*STAR
+
+1) On your file server create the directory space for the Co*STAR / CWC files and share/export it.
+2) From a PC connected (via the LAN) to the file server insert the Co*STAR installation disk into the floppy drive, typically A: or B:.
+3) Now run the INSTALL program.  Using the Window's Program Manager, selecting the FILE menu, and then selecting the RUN option do this.  From Windows95 or NT4.x select Start on the Taskbar and then select the Run option.
+4) Enter the floppy disk drive location A: or  B: of the Co*STAR installation disk, and type the word INSTALL.
+5) Press the OK button to activate the installation program. You should specify the network drive (and directory if needed) of the server directory where Co*STAR is to be installed. 
+
+The Installation Program will then copy the files and create a Co*STAR Program Group for the Program Manager.
+
+6) Once the installation program has completed, a final message box will be displayed.  Click on the "OK" button to end the installation.
+7) Remove the Co*STAR installation disk.
+
+
+NETWORK FILE SERVER INSTALLATION STEPS - Caelus Windows Client
+
+8) Copy the setup.exe file from the cwc directory from the release media to the directory where Co*STAR was/is installed.
+9) Now run the SETUP program which was just copied to the Co*STAR directory using the same procedure as step 3 above.  Click on the Install Button when the Welcome Dialog Box is displayed.
+10) On the Select Component to Install window select Network Server Install.
+11) After selecting Network Server Install (the selection should be 'X'ed), select OK to continue. You will be prompted to select UNIX or NT server installation.
+12) After selection of UNIX or NT server, you will be prompted for the drive (and directory if needed) you installed Co*STAR into back in step 5 above.  It will check the information you give it to confirm that this directory is one with Co*STAR installed.
+13) You have a last chance opportunity to cancel the installation and start over.  Select YES to proceed.
+
+After selecting YES the Installation Program will copy the CWC files to the server drive.  During the installation, a Window is displayed showing the files being copied and the percentage of completion.
+
+14)	Once the installation program has completed, an option to display a readme file containing any corrections or updates will appear.  Following the display readme file option the final message box will be displayed.  Click on the "OK" button to end the installation.
+
+Note: The server license information is retained on the client PC you performed this installation from.  Do NOT therefore reformat the drive or re-install windows without first uninstalling CoStar to save the license information!
+
+
+
+PC INSTALLATION STEPS
+
+These instructions cover the installation of Co*STAR and CWC onto a PC.  There are three possible types of installations for a PC:
+1) Network Client Install (where most of the files are located on a network file server).
+2) Stand-alone PC Install (where all files reside on the local PC hard drive and the PC is connected to a local area network either directly or via a dialup RAS connection)
+3) Serial Connect PC Install (same as a stand-alone install except that the connection is from the PC's COM port to a Host Serial Port without using a network connection or network software. This may be either via a modem or a DTC controller).
+Most of the steps for the different installations are the same except where otherwise noted.
+
+
+NETWORK CLIENT INSTALL STEPS - Co*STAR
+
+1) First, start up the Windows software and make sure that no other programs are running.  Map the network server directory where Costar was installed to a local drive letter.  If you do not know how to perform this step contact your Windows support person/service.
+2) Now run the INSTALL program.  Using the Window's Program Manager, selecting the FILE menu, and then selecting the RUN option do this.  From Windows95 or NT4.x select Start on the Taskbar and then select the Run option.
+3) Enter the network drive letter and directory where Co*STAR and CWC are installed followed by install.exe.
+4) Press the OK button to activate the installation program. By default, the Co*STAR client files will be installed to the C:\Costar directory on the local hard drive.  To install to this directory, click the "Continue" button.  If installing to a different location, type the name of the directory and/or drive in the text box before clicking "Continue", or click "Cancel" to exit the installation program.
+
+Note: It is not necessary to create the directory Costar.  It will be created automatically if it does not already exist.
+
+After selecting "Continue", the installation program will verify that enough disk space is available to install Co*STAR.  If there is insufficient disk space, you will prompted to select another location for Co*STAR.  The Installation Program will now copy the client files needed off the server and create a Co*STAR Program Group for the Program Manager.  During the installation, a Window is displayed showing the files being copied and the percentage of completion:  This procedure is very quick when performing a Network Client install as very few files are copied to the Network Client PC.
+
+5)	Once the Co*STAR installation program has completed, a final message box will be displayed.  Click on the "OK" button to end the installation.
+
+
+NETWORK CLIENT INSTALL STEPS - Caelus Windows Client
+
+6) Now run the SETUP program which was copied to the Co*STAR directory on the network file server.  Using the Window's Program Manager, selecting the FILE menu, and then selecting the RUN option do this.  From Windows95 or NT4.x select Start on the Taskbar and then select the Run option. For the program to run or open type a:\setup and then press ENTER.
+7) Click on INSTALL when the dialog box appears.
+8) When the message prompting you to check to make sure that no other programs are running appears, please check to make that none are before proceeding by selecting OK.
+9) On the Select Component to Install window, select Network Client Install.
+10) After making the selection, select OK to continue.
+11) Now you will be prompted for the location on your file server where you installed the server software.  Enter the drive letter (and directory if needed) where Co*STAR is installed on your network file server and select OK to proceed.  This drive and directory should match the one given back in step 3 of the network client install procedure.  The install program will verify that you entered the right directory and then proceed to the next step.
+12) You will see the program searching for the directory you installed Co*STAR into back in step 4 above.  Next it will ask you to confirm that the directory it found is the correct one (if not, change it to the directory you used in step 4).
+13) You will now be asked to supply the HOST name and IP Address of your Host computer.  If you do not know this information, obtain it from your network administrator. On Unix systems the host name can be displayed by entering the command:   uname -n.  The IP address can be determined by viewing the Unix Host's /etc/hosts file.   If you need to you may leave the default values in but you will have to change the settings later using the Co*STAR Terminal Configuration pulldown menu item.
+14) You have a last chance opportunity to cancel the installation and start over.  Select YES to proceed.  The Installation Program will copy the CWC files and create a Caelus Windows Client Program Group.  During the installation, a Window is displayed showing the files being copied and the percentage of completion.
+15) After all the files have been copied and program group entries have been created several status messages may be displayed which communicate the success (or failure) of the installation of the optional run-time components.  If these messages appear just acknowledge them and continue on.
+16) Once the installation program has completed, an option to display a readme file containing any corrections or updates will appear.  Following the display readme file option the final message box will be displayed.  Click on the "OK" button to end the installation.
+
+
+STAND-ALONE & SERIAL CONNECT PC INSTALL STEPS
+
+In order to install Caelus Windows Client on a Stand-Alone/Serial Connect PC, it is necessary to create diskettes to be used on that PC.  It will require three (3) formatted diskettes to be available.  There are three subdirectories located beneath the cwc directory on the release media.  They are disk001, disk002, and disk003.  Copy the contents of each subdirectory to a corresponding diskette, labeling the diskettes CWC Disk 1, CWC Disk 2, and CWC Disk 3.  On disk 1, provide enough instruction to indicate to the user to run setup.exe from the diskette.  It also may be useful to provide a hard copy print out of the following instructions to aid them in installing/upgrading their software.
+
+
+STAND-ALONE & SERIAL CONNECT PC INSTALL STEPS - Co*STAR
+
+1) First, start up the Windows software and make sure that no other programs are running.  Next insert the Co*STAR installation disk into the floppy disk drive, typically A: or B:.
+2) Now run the INSTALL program.  Using the Window's Program Manager, selecting the FILE menu, and then selecting the RUN option do this.  From Windows95 or NT4.x select Start on the Taskbar and then select the Run option.
+3) Enter the floppy disk drive location A: or B: of the Co*STAR installation disk. Then type the word INSTALL
+4) Press the OK button to activate the installation program. By default, Co*STAR will be installed to the C:\Costar directory on the hard drive.  To install to this directory, click the "Continue" button.  If installing to a different location, type the name of the directory and/or drive in the text box before clicking "Continue", or click "Cancel" to exit the installation program.
+
+Note: It is not necessary to create the directory Costar.  It will be created automatically if it does not already exist.
+
+After selecting "Continue", the installation program will verify that enough disk space is available to install Co*STAR.  If there is insufficient disk space, you will prompted to select another location for Co*STAR.
+
+Note:  If you purchased more than one copy of Co*STAR, the installation diskette or server software may contain multiple Co*STAR licenses.  You can verify how many licenses are left by referring to the "Installations Remaining" message on the Install screen.  This message will not appear for Upgrade installations.  To move a license from one PC to another, please refer to the section on Un-Installing Co*STAR.
+
+The Installation Program will then copy the files and create a Co*STAR Program Group for the Program Manager.  During the installation, a Window is displayed showing the files being copied and the percentage of completion.
+
+5)	Once the installation program has completed, a final message box will be displayed.  Click on the "OK" button to end the installation. Remove the Co*STAR installation disk.
+
+
+STAND-ALONE & SERIAL CONNECT PC INSTALL STEPS - Caelus Windows Client
+
+6) Insert the 1st install disk for the Caelus Windows Client software.
+7) Now run the SETUP program, which is on the installation disk. Using the Window's Program Manager, selecting the FILE menu, and then selecting the RUN option do this.  From Windows95 or NT4.x select Start on the Taskbar and then select the Run option. Enter the floppy disk drive location A: or B: of the Co*STAR installation disk. Then type the word SETUP.EXE and press ENTER.
+8) Click on INSTALL when the dialog box appears.
+9) When the message prompting you to check to make sure that no other programs are running appears, please check to make that none are before proceeding by selecting OK.
+10) On the Select Component to Install window select stand-alone PC Install or Serial Connect Install, depending on which type you are performing.  After making the appropriate selection, select OK to continue.
+11) You will see the program searching for the directory you installed Co*STAR into back in step 4 above.  Next it will ask you to confirm that the directory it found is the correct one (if it is not, change it to the directory you used in step 4).
+
+If you selected Serial Connect Install the skip ahead to Step 13.
+
+12)	You will now be asked to supply the HOST name and IP Address of your Host computer.  If you do not know this information obtain it from your network administrator. On Unix systems the host name can be displayed by entering the command:   uname -n.  The IP address can be determined by viewing the Unix Host's /etc/hosts file.   If you need to you may leave the default values in but you will have to change the settings later using the Co*STAR Terminal Configuration pulldown menu item.
+
+If you selected stand-alone PC Install then skip ahead to step 14.
+
+13) This step only applies if you selected Serial Connect Install.  You will be prompted to supply the COM Port, Baud Rate, Parity, and Character Size in Data Bits for connecting to your Host.  Enter the information as prompted and continue.
+14) You have a last chance opportunity to cancel the installation and start over.  Select YES to proceed.  After selecting YES the Installation Program will copy the CWC files and create a Caelus Windows Client Program Group.  During the installation, a Window is displayed showing the files being copied and the percentage of completion.
+15) After all the files have been copied and program group entries created several status messages may be displayed which communicate the success (or failure) of the installation of the optional run-time components.  If these messages appear just acknowledge them and continue on.
+16) Once the installation program has completed, an option to display a readme file containing any corrections or updates will appear.  Following the display readme file option the final message box will be displayed.  Click on the "OK" button to end the installation.
+
+
+
+POST-INSTALLATION STEPS
+
+
+UNIX Host Options
+
+This section covers the settings that may be made on the UNIX host which affect a user who is/will be using the Caelus Windows Client.
+
+
+PERSONALITY Settings
+
+There is one (1) specific setting that should be made to the user's Wisp personality.  This setting affects the terminal configuration and specifically controls whether or not modifiable fields are displayed with the sculpted appearance or not.  To change this setting, perform the following steps:
+
+1) Login as the user
+2) Enter the Wisp Command Processor Menu
+{From the Unix Command line run wshell}
+{From a CMS Menu or program press Control E}
+3) From the Command Processor Menu select F10 - Configure Terminal
+4) On the next menu select F2 - PSUEDO Blank Characteristics
+5) On the next screen change Pseudo blank character to B, change Using pseudo blank rendition to R, press RETURN followed by F1 (function key 1).
+6) On the Command Processor Menu select F13 - Save environment
+7) Answer YES to the Are you sure you want to write the usage constants? Question and press RETURN.
+8) When the enter filename to write prompt appears just press RETURN with the filename field blank.
+9) Return or exit from the menu shell.
+
+
+Login Script Changes
+
+Optionally you may set a shell variable in the login script called CMSTERM to control whether or not CMS will function in GUI mode or not.  If this value is not set then CMS will automatically make the determination itself by sending a query to the terminal emulator and waiting 1-2 seconds for a response - the result of which informs CMS whether or not the user is running he CoStar/CWC software or not.  Valid values for CMSTERM are:
+	CMSGUI - forces CMS to think its running in the CWC/Windows environment
+	CMSCHR - forces CMS to think its running on a dumb, character terminal
+	CMSUNDEF - makes CMS test to see what environment its running in.
+
+Other changes that should be made in the login script include changing the setting of the TERM and WISPTERM shell variables.  TERM should be set to vt220.  WISPTERM should be set to costar.
+
+
+Videocap Changes
+
+A new file called costar should have been added to your /cms/wisp/config/videocap/ directory.  Please verify that it is there.
+
+
+User Settings in CMSUSRIN
+
+There is now a new menu option, which contains 11 settings in the Manage CMS User Access Rights program CMSUSRIN, those are specific to CWC. These settings may be used to implement site or user specific preferences governing screen presentation.
+
+The new settings are:
+1)	Change Function Key Prompts to Buttons?
+If the value entered here is Y  for Yes then program screens with function keys displayed either on the top 3 lines or bottom 5 lines will be changed to Command Buttons.  If the value entered here is N then Function Key Prompts will not be transformed into buttons.
+
+2)	Show Wallpaper Background
+If the value entered here is Y then a wallpaper bitmap picture will be displayed as a backdrop in each program launched from the CMSCONTR menu program.  This bitmap image is called cmsbakgr.bmp and is located in the directory as the icons and may be customized as desired as long as the name stays the same.  Note that this image is tiled when displayed.
+
+3)	Menu Items As Icons (Y/N/T)?
+If the value entered in this field is N for No then CMS Menus will show Function Keys rather than Icons.  If the value is Y then one icon will be displayed for any Menu entries (the folder icon) and one icon for executable entries (a pointing hand icon).  If the value is T (type) then menus will have the same icon as  Y but executables will show an icon that represents the type of program or procedure script (i.e. report writer, input program, etc).  These icons (.ico files) may be found in the ../costar/caelus/images directory located either on a network server or on your local PC hard drive and may be customized if so desired (as long as the names stay the same). 
+
+4)	Allow File Transfers?
+If the value entered here is Y then it will allow users to make file transfers.  If the value is N then users will not be able to transfer files.
+
+5)	Allow In-Place Editing Of Menus?
+If the value entered here is Y then it will allow users to edit menus.  If the value is N then users will not be able to edit menus.
+
+6)	Allow Editing of Button Bars?
+If the value entered here is Y then it will allow users to edit button bars.  If the value is N then users will not be able to edit button bars.
+
+7)	Allow Editing of Toolbars?
+If the value entered here is Y then it will allow users to edit toolbars.  If the value is N then users will not be able to edit toolbars.
+
+8)	Allow Editing of Hotspots?
+If the value entered here is Y then it will allow users to edit hotspots.  If the value is N then users will not be able to edit hotspots.
+
+9)	Allow Editing of Terminal Configuration?
+If the value entered here is Y then it will allow users to edit their terminal configuration.  If the value is N then users will not be able to edit their terminal configuration.
+
+10)	Show Button Bar?
+If the value entered here is Y then it will allow users to view the button bar.  If the value is N then users will not be able to view the button bar.
+
+11)	Show Toolbar?
+If the value entered here is Y then it will allow users to view the toolbar.  If the value is N then users will not be able to view the toolbar.
+
+In addition the names of the Standard Popup Programs and/or Procedures will automatically be displayed on the button bar of the menu program CMSCONTR when menus are being presented.  There is no means at present to display a description of the programs instead.  This is planned for a future release.
+

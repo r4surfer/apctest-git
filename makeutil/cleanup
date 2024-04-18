@@ -1,0 +1,468 @@
+#!/usr/bin/csh
+
+# Routine to 
+#
+
+ls .. > ./tmpclean0
+
+foreach file (`cat tmpclean0`)
+	echo $file
+	if ($file == 'subsrcr2') then
+		goto type1
+	endif
+	if ($file == 'subsrcr3') then
+		goto type1
+	endif
+	if ($file == 'subsrce2') then
+		goto type1
+	endif
+	if ($file == 'subsrce3') then
+		goto type1
+	endif
+	if ($file == 'presr3') then
+		goto type1
+	endif
+	if ($file == 'presr2') then
+		goto type1
+	endif
+	if ($file == 'press3') then
+		goto type1
+	endif
+	if ($file == 'press2') then
+		goto type1
+	endif
+	if ($file == 'pressx') then
+		goto type1
+	endif
+	if ($file == 'custsr3') then
+		goto type1
+	endif
+	if ($file == 'custsr2') then
+		goto type1
+	endif
+	if ($file == 'custss3') then
+		goto type1
+	endif
+	if ($file == 'custss2') then
+		goto type1
+	endif
+	if ($file == 'custssx') then
+		goto type1
+	endif
+	if ($file == 'utilsrce') then
+		goto type1
+	endif
+	if ($file == 'source2') then
+		goto type1
+	endif
+	if ($file == 'sourcecd') then
+		goto type1
+	endif
+	if ($file == 'sourcecm') then
+		goto type1
+	endif
+	if ($file == 'sourcemc') then
+		goto type1
+	endif
+	if ($file == 'sourcewa') then
+		goto type1
+	endif
+	if ($file == 'presrcx' ) then
+		goto type1
+	endif
+	if ($file == 'custsrcx' ) then
+		goto type1
+	endif
+	if ($file == 'presrce' ) then
+		goto type1
+	endif
+	if ($file == 'custsrce') then
+		goto type1
+	endif
+	if ($file == 'presubs') then
+		goto type1
+	endif
+	if ($file == 'custsubs') then
+		goto type1
+	endif
+	if ($file == 'subsrcr2_o') then
+		if ( -d ../subsrcr2 ) then
+		goto type2
+		else
+		goto type6
+		endif
+	endif
+	if ($file == 'subsrcr3_o') then
+		if ( -d ../subsrcr3 ) then
+		goto type2
+		else
+		goto type6
+		endif
+	endif
+	if ($file == 'subsrce2_o') then
+		goto type2
+	endif
+	if ($file == 'subsrce3_o') then
+		goto type2
+	endif
+	if ($file == 'pressx_o') then
+		goto type2
+	endif
+	if ($file == 'custssx_o') then
+		goto type2
+	endif
+	if ($file == 'subobj_o') then
+		goto type3
+	endif
+	if ($file == 'cutilsrce_o') then
+		if ( -d ../cutilsrce ) then
+		goto type2
+		else
+		goto type6
+		endif
+	endif
+	if ($file == 'utilsrce_o') then
+		if ( -d ../utilsrce ) then
+		goto type2
+		else
+		goto type6
+		endif
+	endif
+	if ($file == 'presubs_o') then
+		goto type2
+	endif
+	if ($file == 'custsubs_o') then
+		goto type2
+	endif
+	if ($file == 'load1') then
+		goto type3
+	endif
+	if ($file == 'object2') then
+		goto type3
+	endif
+	if ($file == 'utility') then
+		goto type3
+	endif
+	if ($file == 'fixes') then
+		goto type4
+	endif
+	if ($file == 'hexedsrc') then
+		goto type5
+	endif
+	if ($file == 'cutilsrce') then
+		goto type6
+	endif
+	if ($file == 'errfile') then
+		goto function8
+	endif
+	continue
+
+	type1:
+	set ret = 1
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *ake* *err'
+	echo '2) rm -f *.?'
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function1
+	endif
+	if ($resp == '2') then
+		goto function2
+	endif
+	goto type1
+
+	type2:
+	set ret = 2
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *ake* *err'
+	echo '2) rm -f *.?'
+	echo '3) rm -f *'
+	echo '4) rm -r '$library
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function1
+	endif
+	if ($resp == '2') then
+		goto function2
+	endif
+	if ($resp == '3') then
+		goto function3
+	endif
+	if ($resp == '4') then
+		goto function4
+	endif
+	goto type2
+
+	type3:
+	set ret = 3
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *'
+	echo '2) rm -r '$library
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function3
+	endif
+	if ($resp == '2') then
+		goto function4
+	endif
+	goto type3
+
+	type4:
+	set ret = 4
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *ake* *err'
+	echo '2) rm -r *.?'
+	echo '3) remove executables'
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function1
+	endif
+	if ($resp == '2') then
+		goto function2
+	endif
+	if ($resp == '3') then
+		goto function5
+	endif
+	goto type4
+
+	type5:
+	set ret = 5
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *.o *err'
+	echo '2) rm -r hexed'
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function6
+	endif
+	if ($resp == '2') then
+		goto function7
+	endif
+	goto type5
+
+	type6:
+	set ret = 6
+	set library = $file
+	if ( ! (-d ../$library)) then
+		continue
+	endif
+	echo 'Cleanup directory ../'$library
+	echo ' '
+	echo '1) rm -f *ake* *err'
+	set resp = $<
+	if ($resp == '') then
+		continue
+	endif
+	if ($resp == '1') then
+		goto function1
+	endif
+	goto type6
+
+	function1: 
+	echo 'performng rm -f *ake* *err'
+	cd ../$library
+	ls ./*ake* ./*err
+	pwd
+	echo 'rm -f *ake* *err [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./*ake* ./*err
+	endif
+	cd ../makeutil
+	goto functionx
+
+	function2: 
+	echo 'performing rm -f *.?'
+	cd ../$library
+	ls ./*.?
+	pwd
+	echo 'rm -f *.? [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./*.?
+	endif
+	cd ../makeutil
+	goto functionx
+
+	function3: 
+	echo 'performing rm -f *'
+	cd ../$library
+	ls ./*
+	pwd
+	echo 'rm -f * [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./*
+	endif
+	cd ../makeutil
+	goto functionx
+
+	function4: 
+	echo 'performing rm -r '$library
+	cd ..
+	ls $library
+	pwd
+	echo 'rm -r '$library' [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -r ./$library
+	endif
+	cd ./makeutil
+	goto functionx
+
+	function5: 
+	echo 'performing remove executables'
+	cd ../$library
+	set templs = ls
+	$templs > ./tmpclean1
+	unset templs
+	foreach prog (`cat ./tmpclean1`)
+		if (-x ./$prog) then
+		echo $prog
+		endif
+	end
+	pwd
+	echo 'remove executables [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		foreach prog (`cat ./tmpclean1`)
+			if (-x ./$prog) then
+				rm ./$prog
+				echo $prog 'removed'
+			endif
+		end
+	endif
+	rm ./tmpclean1
+	cd ../makeutil
+	goto functionx			
+
+	function6: 
+	echo 'performing rm -f *.o *err'
+	cd ../$library
+	ls ./*.o ./*err
+	pwd
+	echo 'rm -f *.o *err [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./*.o ./*err
+	endif
+	cd ../makeutil
+	goto functionx
+
+	function7: 
+	echo 'performing rm -f hexed'
+	cd ../$library
+	ls ./hexed
+	pwd
+	echo 'rm -f hexed [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./hexed
+	endif
+	cd ../makeutil
+	goto functionx
+
+	function8: 
+	echo 'performing rm -f errfile'
+	cd ..
+	pwd
+	echo 'rm -f errfile [y?]'
+	set resp = $<
+	if ( ! ($resp == 'y')) then
+		echo 'not done'
+	else
+		rm -f ./errfile
+	endif
+	cd ./makeutil
+	continue
+
+	functionx:
+	clear
+	switch ($ret)
+		case 1:
+		goto type1
+		breaksw
+
+		case 2:
+		goto type2
+		breaksw
+
+		case 3:
+		goto type3
+		breaksw
+
+
+		case 4:
+		goto type4
+		breaksw
+
+		case 5:
+		goto type5
+		breaksw
+
+		case 6:
+		goto type6
+		breaksw
+
+		default:
+		continue
+		breaksw
+
+		endsw
+
+end
+rm -f ./tmpclean0
+exit 

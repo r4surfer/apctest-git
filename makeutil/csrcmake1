@@ -1,0 +1,17 @@
+
+CMS_IFLAGS=-I$(CMSPATH)/include1
+BC_IFLAGS=-I$(CMSPATH)/include2
+CMS_DIR=-L$(CMSPATH)/load2
+SYS_EXT_OBJ=$(CMSPATH)/load2/cuserid.o /opt/langtools/lib/crt0.o
+
+CMSSUB_DIR=-L$(LDPATH)/load1
+
+C=$(DEVPATH)/custsubs_o/
+P=$(DEVPATH)/presubs_o/
+
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+LD_DIRS=$(CMSSUB_DIR) $(CMS_DIR)
+LD_LIBS=$(CMSSUB_LIB) $(CMS_LIB) $(M_LIB)
+
+COMPILE=$(CMSPATH)/b_cgen
+

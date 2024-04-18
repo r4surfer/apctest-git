@@ -1,0 +1,813 @@
+        REM CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC~
+            *                                                           *~
+            *   AAA   RRRR   IIIII  PPPP   RRRR    SSS   U   U  BBBB    *~
+            *  A   A  R   R    I    P   P  R   R  S      U   U  B   B   *~
+            *  AAAAA  RRRR     I    PPPP   RRRR    SSS   U   U  BBBB    *~
+            *  A   A  R   R    I    P      R   R      S  U   U  B   B   *~
+            *  A   A  R   R  IIIII  P      R   R   SSS    UUU   BBBB    *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * ARIPRSUB - Prints customer invoices based on the data     *~
+            *            passed from the calling program.               *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 10/14/86 ! Original                                 ! JIM *~
+            * 04/01/87 ! Corrected Tax Base Print Variable        ! HES *~
+            * 05/06/87 ! Added Serial Number printing.            ! JIM *~
+            * 05/12/87 ! Removed Extra Space Between Lines w/Text ! HES *~
+            * 10/26/87 ! Now prints Sales Tax to three places     ! HES *~
+            * 12/11/87 ! ARIMASTR Alt keys.                       ! JIM *~
+            * 12/22/87 ! Mod to print in specified currency       ! MJB *~
+            * 08/01/88 ! Invoice totals expressed in tran currency! JIM *~
+            * 11/17/88 ! Price now not formatted via CURRFMT      ! JDH *~
+            * 05/18/89 ! DISCOUNT$ & LINEXTENSION$ now print on   ! MLJ *~
+            *          !   2nd detail line of invoice.            !     *~
+            * 11/09/89 ! Added SYSFILE2 checking multi-currency   ! MLJ *~
+            *          !  usage instead of currency in ARIMASTR,  !     *~
+            *          !  also formatted 9 char zip codes.        !     *~
+            * 11/06/91 ! PRRs 10356,11272. Honor ARMTERMS Flag for! JDH *~
+            *          !  Printing Terms Description on Invoice.  !     *~
+            * 06/03/92 ! Added SO text as a possible source for   ! JDH *~
+            *          !  printing.                               !     *~
+            * 11/10/92 ! Brought Core Deposit Module to R6.02.03. ! JIM *~
+            * 03/30/93 ! Fixed bad branch just above REG_LINE.    ! JDH *~
+            * 12/08/94 ! PRR 13323.  Price printed honoring flag  ! JDH *~
+            *          !  pertaining to discounts.                !     *~
+            *          ! PRR 13327.  Fixed rpt id sent to text prt!     *~
+            * 03/14/95 ! PRR 13187 - Print Xref Parts if exist &  ! RJH *~
+            *          !   BCK Flags indicate to print.           !     *~
+            * 10/24/95 ! Fix image lines #62400& #62600.          ! RJH *~
+            PRODUCTOFCAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVED**
+
+        sub "ARIPRSUB" (dup%, prt%, abend%, cust_code$, invoice$, rptid$)
+
+                /* DUP% equal to 1 indicates a duplicate invoice       */
+                /* PRT% is set to 1 if any invoice is printed          */
+                /* ABEND% is set to 1 if errors suggest 'ABORT'        */
+                /* CUST_CODE$ is the passed customer code              */
+                /* INVOICE$ is the associated Invoice # to print       */
+                /* RPTID$ is the passed report ID                      */
+
+        REM *************************************************************~
+            *This subroutine will print a customer invoice based on the *~
+            *customer code and invoice number passed to it.             *~
+            *************************************************************
+
+        dim                                                              ~
+            amtdue$10,                   /* Edited amount due          */~
+            arilines_key$20,             /* Key to ARILINES            */~
+            arimastr_key$17,             /* Key to ARIMASTR            */~
+            arimscur_key$17,             /* Key to ARIMSCUR            */~
+            bol$3,                       /* Bill of lading fr ARIMASTR */~
+            crmemo$24,                   /* Credit memo text           */~
+            currency$4, currdesc$32,     /* Currency code              */~
+            curr$1,                      /* Multi-currency usage flag  */~
+            cust_code$9,                 /* Customer code from ARIINVRF*/~
+            desc$57,                     /* Descriptions for totals    */~
+            disc$7,                      /* Edited percentages         */~
+            discount$10,                 /* Edited line discount amount*/~
+            discsw$1,                    /* Controls discount functions*/~
+            drcuscode$9,                 /* CORDRMAS provided data for */~
+            drinvcenbr$8,                /*          drop-off invoices */~
+            drinvcelin$3,                /*                            */~
+            drinvcedat$8,                /*                            */~
+            drpurchord$16,               /*                            */~
+            drpurchlin$3,                /*                            */~
+            drpurchdat$8,                /*                            */~
+            drpartcd$25,                 /* Core Part # (CORDRMAS)     */~
+            drpartds$32,                 /* Core Part Description      */~
+            duplicate$24,                /* Duplicate invoice text     */~
+            fmttotal$15,                 /* Formatted total amount     */~
+            fob$20,                      /* F.O.B. from ARIMASTR       */~
+            frt_bill$20,                 /* Frt bill from ARIMASTR     */~
+            how_ship$20,                 /* How to ship from ARIMASTR  */~
+            inv_date$8,                  /* Invoice date from ARIMASTR */~
+            inv_print$1,                 /* Print ARMTERMS Descr?      */~
+            inv_type$1,                  /* Invoice type from ARIMASTR */~
+            invoice$8,                   /* Invoice # from ARIINVRF    */~
+            mask$85,                     /* Text mask                  */~
+            lineid$4,                    /* ARILINES Line ID for S/N's */~
+            linextension$12,             /* Formatted line extension   */~
+            nonstock$1,                  /* Line Non-stocked flag      */~
+            part_nmbr$25,                /* Part number from ARILINES  */~
+            part_desc$32,                /* Part descr from ARILINES   */~
+            po$16,                       /* PO number from ARIMASTR    */~
+            price$10,                    /* Edited unit price          */~
+            price_uom$4,                 /* Pricing UOM from ARILINES  */~
+            prog$8,                      /* Program name               */~
+            readkey$100,                 /* General purpose read var   */~
+            qty_ordr$10,                 /* Edited open quantity       */~
+            qty_ship$10,                 /* Edited order quantity      */~
+            rptid$6,                     /* Report ID from caller      */~
+            seqnr$3,                     /* ARI Sequence Number        */~
+            ser$6,                       /* Serial # literal           */~
+            serprint$76,                 /* Serial # print area        */~
+            serial$20,                   /* Serial # from SERMASTR     */~
+            serkey$99,                   /* SERMASTR key               */~
+            ship_to$(6)31,               /* Ship to from ARIMASTR      */~
+            so$16,                       /* Sales Order # from ARIMASTR*/~
+            so_seq$4,                    /* Sales Order Line Seq #     */~
+            sold_to$(6)31,               /* Sold to from ARIMASTR      */~
+            stax$12,                     /* Edited sales tax base amt  */~
+            stock_uom$4,                 /* Stocking UOM from ARILINES */~
+            stor_code$3,                 /* Store # from ARIMASTR      */~
+            taxable$3,                   /* Taxable code description   */~
+            term_amt(30),                /* Terms amount due (ARIMASTR)*/~
+            term_code$20,                /* Terms code from ARIMASTR   */~
+            term_date$(30)8,             /* Terms date from ARIMASTR   */~
+            term_desc$41,                /* Terms descripion           */~
+            term_hdr$31,                 /* Terms descripion (header)  */~
+            term_net$(30)8,              /* Terms net date fr ARIMASTR */~
+            term_pct(30),                /* Terms discount % (ARIMASTR)*/~
+            txbl$1,                      /* Taxable code from ARILINES */~
+            txtid$4,                     /* Text ID- ARIMASTR/ARILINES */~
+            xref_cus$1,                  /* Print Customer Xref Part   */~
+            xref_mnf$1,                  /* Print Manufactur Xref Part */~
+            xref_descr$32,               /* Xref Part # Description    */~
+            xref_part$25,                /* Xref Part Number           */~
+            xref_type$1                  /* Xref Part Type(Cust or Mnf)*/
+
+
+        dim f2%(32),                     /* = 0 if the file is open    */~
+            f1%(32),                     /* = 1 if READ was successful */~
+            fs%(32),                     /* = 1 if file open, -1 if it */~
+                                         /*   doesn't exist, or 0 if   */~
+                                         /*   not yet checked (OPENCHCK*/~
+            rslt$(32)20                  /* Text from file opening     */
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R6.04.02 11/13/95 Precious Metals                 "
+        REM *************************************************************
+
+        REM *************************************************************~
+            *                  S E L E C T   F I L E S                  *~
+            *                                                           *~
+            *-----+----------+------------------------------------------*~
+            *FILE#!  PRNAME  ! D E S C R I P T I O N                    *~
+            *-----+----------+------------------------------------------*~
+            * #2  ! SYSFILE2 ! CMS General Information                  *~
+            * #4  ! ARIMASTR ! Invoice Master file                      *~
+            * #5  ! ARILINES ! Invoice Line Items file                  *~
+            * #6  ! TXTFILE  ! SYSTEM TEXT FILE                         *~
+            * #7  ! HNYMASTR ! Inventory Master File                    *~
+            * #8  ! ARMTERMS ! A/R Payment Terms                        *~
+            * #9  ! SERMASTR ! Serial Number Tracking Master File       *~
+            * #10 ! ARILNCUR ! Currency-specific ARI lines              *~
+            * #11 ! CURMASTR ! Multi-Currency Master file               *~
+            * #12 ! ARIMSCUR ! Currency-specific ARI Master             *~
+            * #14 ! BCKMASTR ! Backlog master file                      *~
+            * #15 ! BCKLINES ! Back Log Line Item File                  *~
+            * #7  ! CUSTOMER ! Customer Master File                     *~
+            * #20 ! CORDRMAS ! Core Bank Debit Master File              *~
+            *************************************************************~
+            *       File Selection and Open Calls                       *~
+            *************************************************************
+
+            select #2,  "SYSFILE2",                                      ~
+                        varc,     indexed,  recsize = 500,               ~
+                        keypos =    1, keylen = 20
+
+            select #4,  "ARIMASTR",                                      ~
+                        varc,     indexed,  recsize = 2000,              ~
+                        keypos =    1, keylen =  17,                     ~
+                    alt key 1, keypos =  10, keylen =  8, dup,           ~
+                        key 2, keypos =  18, keylen = 16, dup,           ~
+                        key 3, keypos =  34, keylen = 16, dup
+
+            select #5,  "ARILINES",                                      ~
+                        varc,     indexed,  recsize =  750,              ~
+                        keypos =   1, keylen =  20
+
+            select #6,  "TXTFILE",                                       ~
+                        varc,     indexed,  recsize =  2024,             ~
+                        keypos =   1, keylen =  11
+
+            select #7, "HNYMASTR", varc, indexed, recsize = 900,         ~
+                        keypos =   1, keylen =  25,                      ~
+                    alt key 1, keypos = 102, keylen =  9, dup,           ~
+                        key 2, keypos =  90, keylen =  4, dup
+
+            select #8, "ARMTERMS", varc, indexed, recsize = 100,         ~
+                        keypos =   1,  keylen = 20
+
+            select #9, "SERMASTR", varc, indexed, recsize = 300,         ~
+                keypos = 52, keylen = 45,                                ~
+                alt key  1, keypos = 32, keylen = 45,                    ~
+                    key  2, keypos =  1, keylen = 76
+
+            select #10, "ARILNCUR",                                      ~
+                        varc,     indexed,  recsize =  100,              ~
+                        keypos =   5,  keylen = 20,                      ~
+                        alt key  1, keypos =   1, keylen =  24
+
+            select #11, "CURMASTR",                                      ~
+                        varc,     indexed,  recsize =  256,              ~
+                        keypos =    1, keylen =  4
+
+            select #12, "ARIMSCUR",                                      ~
+                        varc,     indexed,  recsize =  400,              ~
+                        keypos =   5,  keylen = 17,                      ~
+                        alt key  1, keypos =   1, keylen =  21
+
+            select #14,  "BCKMASTR",                                     ~
+                        varc,     indexed,  recsize =  1000,             ~
+                        keypos =    1, keylen =  25,                     ~
+                        alt key  1, keypos =   26, keylen =  16, dup
+
+            select #15,  "BCKLINES",                                     ~
+                        varc,     indexed,  recsize = 300,               ~
+                        keypos =  10,  keylen = 19
+
+            select #16, "CUSTOMER",                                      ~
+                        varc,     indexed,  recsize = 1200,              ~
+                        keypos =    1, keylen =   9,                     ~
+                        alt key 1,  keypos = 10,   keylen =  30,         ~
+                            key 2,  keypos = 424,  keylen =   9,         ~
+                            key 3,  keypos = 771,  keylen =   9,         ~
+                            key 4,  keypos = 780,  keylen =   9
+
+            select #20, "CORDRMAS",                                      ~
+                        varc,     indexed,  recsize =  650,              ~
+                        keypos =   10, keylen =  20,                     ~
+                        alt key  4, keypos =   61, keylen =  40, dup,    ~
+                            key  3, keypos =   36, keylen =  34, dup,    ~
+                            key  2, keypos =   19, keylen =  11,         ~
+                            key  1, keypos =    1, keylen =  29
+
+        REM *************************************************************~
+            *                I N I T I A L I Z A T I O N                *~
+            *-----------------------------------------------------------*~
+            * Initializes information necessary for program.            *~
+            * Initialization code is done one time only.                *~
+            *************************************************************
+
+            if been_here_before% <> 0% then goto L10000
+            been_here_before% = 1%
+            abend% = 1% /* Abnormal terminate if errors during OPENs */
+                rslt$(4 ) = "REQUIRED"
+            call "OPENCHCK" (#4,  fs%(4 ), f2%(4 ), 0%, rslt$(4 ))
+                if fs%(4) < 0 then exit_program
+                rslt$(5 ) = "REQUIRED"
+            call "OPENCHCK" (#5,  fs%(5 ), f2%(5 ), 0%, rslt$(5 ))
+                if fs%(5) < 0 then exit_program
+            call "OPENCHCK" (#2,  fs%(2 ), f2%(2 ), 0%, rslt$(2 ))
+                curr$ = "N"
+                call "READ100" (#2, "SWITCHS.CUR", f1%(2))
+                if f1%(2) <> 0% then get #2 using L09137, curr$
+L09137:            FMT POS(21), CH(1)
+
+*        Try to enable the Core Deposit Drop-Off Invoice scheme.
+                call "READ100" (#2, "SWITCHS.COR", core_track%)
+                if core_track% <> 0% then call "OPENCHCK" (#20, fs%(20%),~
+                     f2%(20%), 0%, rslt$(20%))
+            call "OPENCHCK" (#6,  fs%(6 ), f2%(6 ), 0%, rslt$(6 ))
+            call "OPENCHCK" (#7,  fs%(7 ), f2%(7 ), 0%, rslt$(7 ))
+            call "OPENCHCK" (#8,  fs%(8 ), f2%(8 ), 0%, rslt$(8 ))
+            call "OPENCHCK" (#9,  fs%(9 ), f2%(9 ), 0%, rslt$(9 ))
+            call "OPENCHCK" (#10, fs%(10), f2%(10), 0%, rslt$(10))
+            call "OPENCHCK" (#11, fs%(11), f2%(11), 0%, rslt$(11))
+            call "OPENCHCK" (#12, fs%(12), f2%(12), 0%, rslt$(12))
+            call "OPENCHCK" (#14, fs%(14), f2%(14), 0%, rslt$(14))
+            call "OPENCHCK" (#15, fs%(15), f2%(15), 0%, rslt$(15))
+            call "OPENCHCK" (#16, fs%(16), f2%(16), 0%, rslt$(16))
+
+            call "EXTRACT" addr("CF", prog$)
+            select printer (87)
+            call "SETPRNT" (rptid$, prog$, 0%, 0%)
+
+            max_lines% = 35%
+            call "BCKSWTCH" ("BCK", "DISCS   ", discsw$, disc1or2, comp%)
+            discsw$ = "N"
+            if disc1or2 = 2 then discsw$ = "Y"
+
+            call "READ100" (#02, "SWITCHS.BCK", f1%(02%))
+            if f1%(02%) = 1% then get #02 using L09340, xref_cus$, xref_mnf$
+L09340:         FMT POS(63), CH(1), CH(1)
+
+        REM CHECK XREF PRINT SETTINGS
+            call "READ100" (#16, cust_code$, f1%(16%))
+            if f1%(16%) = 0% then L09980     /* Shouldn't happen */
+            get #16 using L09400 , temp_cus$, temp_mnf$
+L09400:         FMT POS(1092), CH(1), CH(1)
+
+            if temp_cus$ = " " then L09450
+                if pos("YNB" = temp_cus$) <> 0% then xref_cus$ = temp_cus$
+
+L09450:     if temp_mnf$ = " " then L09980
+                if pos("YNB" = temp_mnf$) <> 0% then xref_mnf$ = temp_mnf$
+
+L09980:     call "SHOSTAT" ("Printing Customer Invoices")
+
+L10000: REM *************************************************************~
+            *             M A I N   P R O G R A M   L O O P             *~
+            *-----------------------------------------------------------*~
+            *  The following code is executed once for each call of this*~
+            *  subroutine -- which is equivalent to a single invoice.   *~
+            *************************************************************
+
+            abend% = 0% /* Indicate normal (no error) processing    */
+            invtaxable = 0
+            currdesc$, duplicate$ = " "
+            if dup% <> 0% then duplicate$ = "THIS IS A DUPLICATE COPY"
+
+            arimscur_key$, arimastr_key$ = str(cust_code$,,9) & invoice$
+            call "READ100" (#4, arimastr_key$, f1%(4))
+            if f1%(4) = 0% then goto exit_program
+            get #4 using L10230, po$, so$, bol$, ship_to$(), sold_to$(),  ~
+                how_ship$, fob$, frt_bill$, inv_date$, invgrossamt,      ~
+                invdiscpct, invdiscamt, invfrtamt, invstaxamt, invnetamt,~
+                stor_code$, invstaxpct, inv_type$, txtid$, term_code$,   ~
+                term_amt(), term_pct(), term_date$(), term_net$(),       ~
+                currency$
+
+        REM Partial record layout for file 'ARIMASTR' *******************
+L10230:         FMT  POS(18), CH(16),    /* Purchase Order number      */~
+                     POS(34), CH(16),    /* Sales Order number         */~
+                     POS(50), CH( 3),    /* Bill of lading             */~
+                     POS(53), 6*CH(30),  /* Ship-to name & address     */~
+                     POS(233), 6*CH(30), /* Sold-to name & address     */~
+                     POS(419), CH(20),   /* How shipped (shipped via)  */~
+                     POS(439), CH(20),   /* FOB                        */~
+                     POS(481), CH(20),   /* Freight bill number        */~
+                     POS(521), CH( 6),   /* Invoice date               */~
+                     POS(793), PD(14,4), /* Gross invoice amount       */~
+                     POS(801), PD(14,4), /* Invoice discount percent   */~
+                     POS(809), PD(14,4), /* Invoice discount amount    */~
+                     POS(817), PD(14,4), /* Freight amount             */~
+                     POS(825), PD(14,4), /* Sales tax amount           */~
+                     POS(833), PD(14,4), /* Net invoice amount         */~
+                     POS(870), CH( 3),   /* Store code                 */~
+                     POS(883), PD(14,4), /* Sales tax percent          */~
+                     POS(891), CH( 1),   /* Invoice Type               */~
+                     POS(901), CH( 4),   /* Text ID (header)           */~
+                     POS(908), CH(20),   /* Terms code                 */~
+                     POS(928), 30*PD(14,4),/* Terms amounts due        */~
+                     POS(1168), 30*PD(14,4),/* Terms cash discount pct */~
+                     POS(1408), 30*CH(6),/* Terms discount due dates   */~
+                     POS(1588), 30*CH(6),/* Terms net due              */~
+                     POS(1779), CH(4)    /* Currency code              */
+
+            if currency$ = " " or curr$ <> "Y" then goto L10530
+                call "DESCRIBE" (#11, currency$, currdesc$, 1%, f1%(11))
+                if currdesc$ = " " then currdesc$ = "(" & currency$ & ")"
+
+L10530: REM Now replace invoice totals with transaction currency amounts,~
+            if header record exists in ARIMSCUR.
+            if curr$ <> "Y" then L10630
+               call "READ100" (#12, arimscur_key$, f1%(12))
+                   if f1%(12) = 0% then goto L10630
+               get #12 using L10600, invgrossamt, invdiscamt, invfrtamt,  ~
+                   invstaxamt, invnetamt, term_amt()
+
+L10600:         FMT POS(22), 5*PD(14,4), POS(92), 30*PD(14,4)
+
+L10630:     prt% = 1% /* Indicate print activity */
+            call "DATEFMT" (inv_date$)
+            crmemo$ = " "
+            if inv_type$ = "C" then crmemo$ = ">>>>> CREDIT MEMO <<<<<"
+            term_hdr$ = "SEE SCHEDULE BELOW"
+            if term_code$ = "DATED" then goto smasher
+                amtdue$, term_desc$ = " " : t% = 1%
+                call "READ100" (#8, term_code$, f1%(8))
+                if f1%(8) <> 1% then L10700
+                     get #8 using L10694, term_desc$, inv_print$
+L10694:                   FMT POS(21), CH(30), POS(77), CH(1)
+                     if inv_print$ = "Y" then L10710
+                term_desc$ = " "
+L10700:         gosub term_descriptor
+L10710:         call "STRING" addr("LJ", term_desc$, 41%)
+                term_hdr$ = term_desc$
+        smasher
+            if str(ship_to$(6),17,1) <> " " or str(ship_to$(6),16,1)     ~
+               <> " " or pos(str(ship_to$(6),27,4) = " ") > 0% then L10736
+            temp$ = str(ship_to$(6),27,4)
+               str(ship_to$(6),28,4) = temp$
+               str(ship_to$(6),27,1) = "-"
+L10736:           call "LINSMASH" (ship_to$())
+            if str(sold_to$(6),17,1) <> " " or str(sold_to$(6),16,1)     ~
+               <> " " or pos(str(sold_to$(6),27,4) = " ") > 0% then L10748
+            temp$ = str(sold_to$(6),27,4)
+               str(sold_to$(6),28,4) = temp$
+               str(sold_to$(6),27,1) = "-"
+L10748:           call "LINSMASH" (sold_to$())
+
+            page_nbr% = 0%
+            gosub page_heading
+            txt% = (page_nbr% * 100%) + nbr_lines%
+            gosub bckmastr_text
+            gosub'200(txtid$)
+            if txt% = (page_nbr% * 100%) + nbr_lines% then L10830
+               REM Text printed, so add blank line after it...
+               print : nbr_lines% = nbr_lines% + 1%
+L10830:     arilines_key$ = key(#4) /* Customer code and Invoice number*/
+            str(arilines_key$,18) = all(hex(00))
+
+        arilines_loop
+            call "PLOWNEXT" (#5, arilines_key$, 17%, f1%(5))
+            if f1%(5) = 0% then goto end_of_lines
+            get #5 using L10940, seqnr$, part_nmbr$, part_desc$, qty_ordr,~
+                qty_ship, stock_prc, stock_uom$, price_uom$, disc,       ~
+                lindiscamt, linextension, txbl$, txtid$, so_seq$,        ~
+                nonstock$, lineid$
+
+        REM Partial record layout for file 'ARILINES' *******************
+L10940:         FMT  POS(18), CH( 3),    /* ARI Sequence Number        */~
+                     POS(24), CH(25),    /* Part number                */~
+                     POS(49), CH(32),    /* Part description           */~
+                     POS(85), PD(14,4),  /* Original order quantity    */~
+                     POS(93), PD(14,4),  /* Quantity shipped           */~
+                     POS(109), PD(14,4), /* Unit price @ stocking      */~
+                     POS(117), CH( 4),   /* Stocking UOM               */~
+                     POS(121), CH( 4),   /* Pricing UOM                */~
+                     POS(141), PD(14,4), /* Line discount %            */~
+                               PD(14,4), /* Line discount amount       */~
+                     POS(157), PD(14,4), /* Line extension             */~
+                     POS(165), CH( 1),   /* Taxable code               */~
+                     POS(190), CH( 4),   /* Text ID (detail line)      */~
+                               CH( 4),   /* SO Line Seq. Number        */~
+                     POS(617), CH( 1),   /* Non-stocked Flag           */~
+                     POS(626), CH( 4)    /* S/N Line ID                */
+
+            if qty_ship = 0 then goto arilines_loop
+            call "READ100" (#10, arilines_key$, f1%(10))
+            if f1%(10) <> 0% then get #10 using L11100, stock_prc,        ~
+                lindiscamt, linextension
+L11100:         FMT POS(25), PD(14,4), POS(41), 2*PD(14,4)
+            if so$ = " " then qty_ordr = qty_ship
+            if discsw$ = "Y" then L11130
+                stock_prc = stock_prc - ((stock_prc * disc) / 100)
+L11130:     call "CONVERT" (qty_ordr, 2.2, qty_ordr$)
+            call "CONVERT" (qty_ship, 2.2, qty_ship$)
+            call "CONVERT" (stock_prc, 2.4, price$)
+            if curr$ = "Y" then call "CURRFMT"                           ~
+                       (linextension, currency$, linextension$, "N")     ~
+               else call "CONVERT" (linextension, 2.2, linextension$)
+            discount$ = " "
+            if discsw$ = "N"  then L11200
+            if lindiscamt = 0 then L11200
+               if curr$ = "Y" then call "CURRFMT"                        ~
+                          (lindiscamt, currency$, discount$, "N")        ~
+                  else call "CONVERT" (lindiscamt, 2.2, discount$)
+
+L11200:     taxable$ = "NO"
+            if txbl$ <> "Y" then goto L11232
+                taxable$ = "YES"
+                invtaxable = invtaxable + linextension
+
+L11232:      /* Get Xref Part Number, if available */
+             call "PTUSEDSB" ( "R", "ARI ",                              ~
+                              str(arilines_key$,,17%), seqnr$,           ~
+                              xref_part$, xref_descr$, xref_type$, ret%)
+             if ret% = 0% then xref_part$,xref_descr$,xref_type$ = " "
+
+            if max_lines% - nbr_lines% < 2% then gosub page_heading
+
+            if xref_part$ = " " then L11250
+            if xref_type$ = "M" and xref_mnf$ <> "Y" then L11250
+            if xref_type$ = "C" and xref_cus$ <> "Y" then L11250
+            if xref_type$ <> "C" and xref_type$ = "M" then L11250
+                part_nmbr$ = xref_part$ : part_desc$ = xref_descr$
+
+L11250:     print using L62600,part_nmbr$,stock_uom$,qty_ordr$,price_uom$
+            nbr_lines% = nbr_lines% + 2%                   /* Trust Me */
+
+            if core_track% = 0% then reg_line
+            if nonstock$ <> "Y" then reg_line
+            call "READ100" (#7, part_nmbr$, f1%(7))
+                if f1%(7) <> 0% then reg_line
+            call "READ100" (#20, str(part_desc$, 4%, 20%), f1%(20%))
+                if f1%(20) = 0% then reg_line
+
+            print using L62400, " ",        taxable$, qty_ship$, price$,  ~
+                               discount$, linextension$
+
+            init (" ") drpartcd$, drpartds$, drpurchord$, drpurchlin$,   ~
+                drpurchdat$
+            get part_desc$ using L11421, drcuscode$, drinvcenbr$,         ~
+                                        drinvcelin$, drinvcedat$
+L11421:         FMT POS(4), CH(9), CH(8), CH(3), CH(6)
+            call "DATEFMT" (drinvcedat$)
+            get #20 using L11461, drpartcd$, drpurchord$, drpurchlin$,    ~
+                                 drpurchdat$
+L11461:         FMT POS(36), CH(25), POS(126), CH(16), CH(3), CH(6)
+            call "DATEFMT" (drpurchdat$)
+            call "DESCRIBE" (#07, drpartcd$, drpartds$, 0%, f1%(7))
+            if max_lines% - nbr_lines% < 3% then gosub page_heading
+            print
+            if str(arilines_key$,,9%) = str(drcuscode$,,9%) then         ~
+               print using L63210, drpartcd$, "#", drinvcenbr$,           ~
+                                  drinvcelin$, drinvcedat$               ~
+            else                                                         ~
+               print using L63230, drpartcd$, drcuscode$, drinvcenbr$,    ~
+                                  drinvcelin$, drinvcedat$
+
+            if drpurchdat$ <> " " then L11681
+
+            if drpurchlin$ <> " " then                                   ~
+               print using L63250, drpartds$, "#", drpurchord$, "/",      ~
+                                  drpurchlin$, " ", " "                  ~
+            else                                                         ~
+               print using L63250, drpartds$, "#", drpurchord$, " ",      ~
+                                  " ", " ", " "
+            goto L11751
+
+L11681:     if drpurchlin$ <> " " then                                   ~
+               print using L63250, drpartds$, "#", drpurchord$, "/",      ~
+                                  drpurchlin$, "DATE:", drpurchdat$      ~
+            else                                                         ~
+               print using L63250, drpartds$, "#", drpurchord$, " ",      ~
+                                  " ", "DATE:", drpurchdat$
+
+L11751:     nbr_lines% = nbr_lines% + 3%
+            goto L13000
+
+        reg_line
+            print using L62400, part_desc$, taxable$, qty_ship$, price$,  ~
+                               discount$, linextension$
+
+L13000:     gosub xref_print       /* Print cross reference part number */
+            gosub serial_number_print
+            gosub bcklines_text
+            gosub'200(txtid$)
+
+        REM Print the part text (if any) from the 'HNYMASTR' file *******
+            call "READ100" (#7, part_nmbr$, f1%(7))
+                if f1%(7) = 0% then L13090
+            get #7 using L13080, txtid$ : gosub'200(txtid$)
+L13080:     FMT POS(98), CH(4)      /* HNYMASTR part text ID      */
+L13090:     print : nbr_lines% = nbr_lines% + 1%
+            goto arilines_loop
+
+        end_of_lines
+            if nbr_lines% > max_lines% then gosub page_heading
+            print using L63140   /* Underscore it */
+            nbr_lines% = nbr_lines% + 1%
+            if curr$ = "Y" then desc$ =                                  ~
+                       currency$ & " " & currdesc$ & " INVOICE TOTAL:"   ~
+               else desc$ = " INVOICE TOTAL:"
+            amount = invgrossamt
+            if curr$ = "Y" then call "CURRFMT"                           ~
+                       (amount, currency$, fmttotal$, "Y")               ~
+               else call "CONVERT" (amount, 2.2, fmttotal$)
+            gosub total_printer
+            if invdiscamt = 0 then goto try_sales_tax
+                convert invdiscpct to disc$, pic (-###.##)
+                desc$ = disc$ & "% INVOICE DISCOUNT:"
+                amount = invdiscamt
+                if curr$ = "Y" then call "CURRFMT"                       ~
+                           (amount, currency$, fmttotal$, "N")           ~
+                   else call "CONVERT" (amount, 2.2, fmttotal$)
+                gosub total_printer
+
+        try_sales_tax
+            if invstaxamt = 0 then goto try_freight
+                taxabledsc = round(invtaxable * invdiscpct * .01, 2)
+                invtaxable = round(invtaxable - taxabledsc, 2)
+                convert invstaxpct to disc$, pic (-##.###)
+                if curr$ = "Y" then call "CURRFMT"                       ~
+                           (invtaxable, currency$, stax$, "N")           ~
+                   else call "CONVERT" (invtaxable, 2.2, stax$)
+                amount = invstaxamt
+                if curr$ = "Y" then call "CURRFMT"                       ~
+                           (amount, currency$, fmttotal$, "N")           ~
+                   else call "CONVERT" (amount, 2.2, fmttotal$)
+                desc$ = disc$ & "% SALES TAX ON " &                      ~
+                     str(stax$, pos(stax$ <> " ")) & ":"
+                gosub total_printer
+
+        try_freight
+            if invfrtamt = 0 then goto try_net_amount
+                amount = invfrtamt
+                if curr$ = "Y" then call "CURRFMT"                       ~
+                           (amount, currency$, fmttotal$, "N")           ~
+                   else call "CONVERT" (amount, 2.2, fmttotal$)
+                desc$ = "FREIGHT CHARGES:"
+                gosub total_printer
+
+        try_net_amount
+            if invnetamt = invgrossamt then goto exit_program
+                amount = invnetamt
+                if curr$ = "Y" then call "CURRFMT"                       ~
+                           (amount, currency$, fmttotal$, "Y")           ~
+                   else call "CONVERT" (amount, 2.2, fmttotal$)
+                desc$ = "INVOICE NET AMOUNT:"
+                gosub total_printer
+            goto exit_program
+
+        page_heading
+            page_nbr% = page_nbr% + 1% : nbr_lines% = 0%
+            if page_nbr% > 1% then print using L62710,                    ~
+                " >>>>>  C O N T I N U E D  <<<<<", " *CONTINUED*"
+            print page
+            print skip(2)
+            print using L60050, crmemo$
+            print using L60050, duplicate$
+            print skip (2)
+            print using L60070, " ", invoice$, inv_date$, page_nbr%
+            print skip(3) /* SKIP TO SOLD-TO, SHIP-TO PORTION OF FORM */
+            for s% = 1% to 6%
+                print using L61000, sold_to$(s%), ship_to$(s%)
+            next s%
+            if curr$ <> "Y" then                                         ~
+               print using L61110, " ", "CUSTOMER NUMBER: " & cust_code$  ~
+            else print using L61110, " CURRENCY: " & currency$ & " " &    ~
+                             currdesc$, "CUSTOMER NUMBER: " & cust_code$
+            print skip(2)
+            if so$ = " " and bol$ = " "                                  ~
+                then print using L62000, term_hdr$, po$                   ~
+                else print using L62000, term_hdr$, po$, so$, "-",  bol$
+            print skip(2)
+            print using L62200, how_ship$, fob$, frt_bill$
+            print skip(2) /* SKIP TO BODY OF FORM */
+            if term_code$ <> "DATED" then return
+            if page_nbr% > 1% then return
+            term_hdr$ = "SEE SCHEDULE ON PAGE 1"
+            print using L62310, "----------- PAYMENT SCHEDULE ------------"
+
+            nbr_lines% = nbr_lines% + 1%
+            for t% = 1% to 30%
+                if term_amt(t%) = 0% then goto L14060
+                   if curr$ = "Y" then call "CURRFMT"                    ~
+                              (term_amt(t%), currency$, amtdue$, "N")    ~
+                      else call "CONVERT" (term_amt(t%), 2.2, amtdue$)
+                   term_desc$ = amtdue$
+                   gosub term_descriptor
+                   print using L62310, term_desc$
+                   nbr_lines% = nbr_lines% + 1%
+L14060:     next t%
+            term_desc$ = all("-")
+            print using L62310, term_desc$
+            nbr_lines% = nbr_lines% + 1%
+            ser$ = "S/N'S:"
+            return
+
+        term_descriptor
+            if term_pct(t%) = 0 then goto net_terms
+               convert term_pct(t%) to disc$, pic (-###.##)
+               call "DATEFMT" (term_date$(t%))
+               term_desc$ = amtdue$ & disc$ & "% " & term_date$(t%) & ","
+
+        net_terms
+            call "DATEFMT" (term_net$(t%))
+            str(term_desc$, len(term_desc$)+1%) = " NET " & term_net$(t%)
+            return
+
+        total_printer
+            if nbr_lines% > max_lines% then gosub page_heading
+            call "STRING" addr ("RJ", desc$, len(str(desc$)))
+            print using L63000, desc$, fmttotal$
+            nbr_lines% = nbr_lines% + 1%
+            return
+
+        serial_number_print
+            ser$ = "S/N'S:" : serkey$, serprint$ = " " : ser% = 0%
+            serkey$ = "4" & str(cust_code$) & str(invoice$) &            ~
+                str(lineid$) & hex(00)
+        plow_serial_master
+            call "PLOWALTS" (#9, serkey$, 2%, 22%, f1%(9))
+            if f1%(9) = 0% then goto plow_serial_done
+                get #9 using L14390, serial$
+L14390:              FMT  /* SERMASTR #9  */ POS(32), CH(20)
+                if len(serprint$) + len(serial$) + ser% >                ~
+                     len(str(serprint$)) then gosub serial_print
+                str(serprint$, len(serprint$) + ser%) = serial$
+                ser% = 2%
+                goto plow_serial_master
+
+        plow_serial_done
+            if ser% <> 0% then gosub serial_print
+            return
+
+        serial_print
+            if nbr_lines% >= max_lines% then gosub page_heading
+            print using L63110, ser$, serprint$
+            ser$, serprint$ = " " : ser% = 0%
+            nbr_lines% = nbr_lines% + 1%
+            return
+
+        bckmastr_text
+            channel% = 14%
+            goto common_bcktext
+
+        bcklines_text
+            channel% = 15%
+
+        common_bcktext
+            save_txtid$ = txtid$
+            txtid$ = hex(ffffffff)
+            if channel% = 14% then readkey$ = str(cust_code$) & so$      ~
+                              else readkey$ = str(so$) & so_seq$
+            call "READ100" (#channel%, readkey$, bcktext%)
+            if bcktext% <> 1% then L14760
+                if channel% = 14% then get #channel% using L14730, txtid$ ~
+                                  else get #channel% using L14740, txtid$
+L14730:              FMT POS(799), CH(4)
+L14740:              FMT POS(242), CH(4)
+                gosub'200(txtid$)
+L14760:         txtid$ = save_txtid$
+                return
+
+        xref_print
+            if xref_type$ = "M" and xref_mnf$ = "B" then L14810 else L14840
+L14810:         print using L63280, "Manufactor Part No.:", xref_part$,   ~
+                                    "(" & xref_descr$ & ")"
+                goto L14870             /* Iterate */
+L14840:     if xref_type$ = "C" and xref_cus$ = "B" then L14850 else L14880
+L14850:         print using L63280, "Customer Part No.:", xref_part$,     ~
+                                    "(" & xref_descr$ & ")"
+L14870:         nbr_lines% = nbr_lines% + 1%
+L14880: return
+
+        REM *************************************************************~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *************************************************************
+
+        REM *************************************************************~
+            *      PRINT TEXT FOR EITHER THE HEADER OR DETAIL LINES     *~
+            *************************************************************
+
+            deffn'200(txtid$)
+            if txtid$ = hex(ffffffff) then return
+            if txtid$ = " " then return
+                comp% = 0%
+L50090:         call "TXTPRINT" (#6, f2%(6),  87%, txtid$, rptid$, 5%,   ~
+                     nbr_lines%, max_lines%, "N", mask$, comp%)
+                if comp% = 0% then return
+                     gosub page_heading
+                     goto L50090
+
+        REM *************************************************************~
+            *            I M A G E   S T A T E M E N T S                *~
+            *************************************************************
+
+L60050: %                                                          ######~
+        ~##################
+L60070: %          ##############################                  ######~
+        ~####### ######## ###
+L61000: %          ###############################            ###########~
+        ~####################
+L61110: % ##################################################  ###########~
+        ~###################
+L62000: % ###############################  ################   ###########~
+        ~##### # ############
+L62200: % ##############################   ####################   #######~
+        ~####################
+L62310: % #########################################
+L62400: % ################################ #### ########## ########## ###~
+        ~####### ############
+L62600: % ################################ #### ########## ####
+
+L62710: % ###############################################################~
+        ~####    ############
+L63000: % ###############################################################~
+        ~#### ###############
+L63110: % ###### ########################################################~
+        ~####################
+
+L63140: %                                                                ~
+        ~     ---------------
+
+L63210: % ################################ INV#: ######## / ###          ~
+        ~  DATE: ##########
+L63230: % ################################ ######### / ######## / ###    ~
+        ~  DATE: ##########
+L63250: % ################################ P/O#: ################ # ###  ~
+        ~  ##### ##########
+
+L63280: %        ################### #########################  #########~
+        ~#########################
+
+        REM THISPROGRAMWASGENERATEDBYGENPGMAPROPRIETRYPRODUCTOFCAELUSASSO~
+            *                          E X I T                          *~
+            *-----------------------------------------------------------*~
+            * Terminates execution (files closed automatically).        *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC
+
+        exit_program
+            end

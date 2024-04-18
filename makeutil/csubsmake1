@@ -1,0 +1,16 @@
+
+CMS_IFLAGS=-I$(INCPATH)/include1
+BC_IFLAGS=-I$(INCPATH)/include2
+
+# Combined Include Directories
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+
+# Define the b_cgen location  
+COMPILE=$(INCPATH)/b_cgen
+
+# Redefine the Suffixes
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+# Other Make Directives
+all:	target	\

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+while [ -z "$CURRDIR" ]
+do
+	echo 'Remove Symbolic Links - Enter Direcory [full path]'
+	read CURRDIR 
+done
+
+if [ ! -d "$CURRDIR" ]
+then
+	echo 'not a directory'; exit
+fi
+
+echo 'Remove symbolic links from '$CURRDIR' [y]es or [i]nteractive'
+read RESP
+
+if [ ! "$RESP" = 'y' ] && [ ! "$RESP" = 'i' ]
+then
+	exit
+fi
+
+for FILENAME in `ls $CURRDIR`
+do
+	if [ -h "$CURRDIR/$FILENAME" ]
+	then
+		echo "$FILENAME is a symbolic link"
+		if [ "$RESP" = 'i' ]
+		then
+			rm -i $CURRDIR/$FILENAME
+		else
+			rm -f $CURRDIR/$FILENAME
+		fi
+	fi
+done

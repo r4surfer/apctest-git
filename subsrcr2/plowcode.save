@@ -1,0 +1,127 @@
+        REM CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC~
+            *                                                           *~
+            *  PPPP   L       OOO   W   W   CCC    OOO   DDDD   EEEEE   *~
+            *  P   P  L      O   O  W   W  C   C  O   O  D   D  E       *~
+            *  PPPP   L      O   O  W   W  C      O   O  D   D  EEEE    *~
+            *  P      L      O   O  W W W  C   C  O   O  D   D  E       *~
+            *  P      LLLLL   OOO    W W    CCC    OOO   DDDD   EEEEE   *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * PLOWCODE -  This subroutine is very similar to the GETCODE*~
+            *             subroutine in that it is a combination verify *~
+            *             and inquiry routine for most standard Caelus  *~
+            *             files.  This routine differs primarily by     *~
+            *             restricting the inquiry to a range of key     *~
+            *             values (similiar to the PLOW logic) and by its*~
+            *             use of sophisticated windowing techniques.    *~
+            *                                                           *~
+            * Example  -  PLOWKEY$ = "TYPE    " & TYPE$                 *~
+            *             CALL "PLOWCODE" (#1, PLOWKEY$,                *~
+            *                                  TYPE_DESCRIPTION$,       *~
+            *                                  8%,                      *~
+            *                                  1.5,                     *~
+            *                                  F1%(1))                  *~
+            *             IF F1%(1) > 0% THEN TYPE$ = STR(PLOWKEY$,9%)  *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1984, AN UNPUBLISHED WORK BY CAELUS ASSSO-  *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 12/07/84 ! ORIGINAL (and proud of it !)             ! LDJ *~
+            * 04/11/85 ! Added Caller defined Message.            ! ERN *~
+            * 12/03/85 ! Change to window if F1% negative         ! LDJ *~
+            * 12/10/85 ! Bug fixes caused by 12/03 changes        ! LDJ *~
+            * 04/08/86 ! Extensive changes-now looks like GETCODE ! LDJ *~
+            *          !  Also added ability to PRINT listing &   !     *~
+            *          !  did some general clean-up.              !     *~
+            *          !  (Now supports duplicate keys, call to   !     *~
+            *          !  MANUAL uses main program (caller) name, !     *~
+            *          !  Key length & description positions now  !     *~
+            *          !  float (supports key lengths of upto 75  !     *~
+            *          !  characters BEFORE or AFTER the break    !     *~
+            *          !  point), now deals with blank key values !     *~
+            *          !  as follows;  if high level allowed to   !     *~
+            *          !  explode downward, if low level and no   !     *~
+            *          !  other non-blank partial (post break%)   !     *~
+            *          !  keys returns with first record - no user!     *~
+            *          !  display).  Probably added a bunch of    !     *~
+            *          !  sneaky bugs with all this crap too.     !     *~
+            *          !  P.S. You can also now inhibit redisplay !     *~
+            *          !  of the prior screen on exit.            !     *~
+            * 04/26/86 ! Even More Changes!  Added extra, optional! LDJ *~
+            *          !  arguments after the F1% argument.       !     *~
+            *          !  These arguments include Column Header   !     *~
+            *          !  Line to display, Key Len after Break,   !     *~
+            *          !  and some include/exclude parameters.    !     *~
+            *          !  Note that these changes really bloated  !     *~
+            *          !  this already fat (segment 1) routine.   !     *~
+            * 06/11/86 ! Added Description Mapping Ability.       ! LDJ *~
+            * 06/25/86 ! Bug Fixes (to as yet unreleased version.)! LDJ *~
+            * 08/07/86 ! Minor Bug Fixes.                         ! LDJ *~
+            * 09/24/86 ! Minor bug fix.  Did not use proper key   ! LDJ *~
+            *          !   value to retrieve description from alt !     *~
+            *          !   file when HIGH_LEVEL% = 1% and         !     *~
+            *          !   BRK% < the key length of the alt file. !     *~
+            * 09/26/86 ! Change for O.S. 7.10 incompatibility.    ! LDJ *~
+            *          !   Call to SCREEN no longer supports      !     *~
+            *          !   passing the Workstation UFB directly.  !     *~
+            * 10/10/86 ! Added Report Writer Option - enhanced    ! LDJ *~
+            *          !   Print Headings while at it.  Also      !     *~
+            *          !   added range selection to Include /     !     *~
+            *          !   Exclude arguments.                     !     *~
+            * 10/22/86 ! Added the Description Overlay Option to  ! LDJ *~
+            *          !   the DISPLAY$ argument (option "D").    !     *~
+            *          !   Also added Key Path # for Alt File.    !     *~
+            * 11/05/86 ! Added Description Search Functions       ! LDJ *~
+            *          !   (ala GETCODE).                         !     *~
+            * 01/09/87 ! Corrected minor 'anomaly' uncovered by   ! LDJ *~
+            *          !   by HES (added lines 9481, 23541-23544).!     *~
+            * 01/28/87 ! Another 'minor anomaly'.  If BREAK% and  ! LDJ *~
+            *          !   KEY_DESCLEN both negative and the key  !     *~
+            *          !   passed in is on file and the alternate !     *~
+            *          !   File UFB is present the wrong key was  !     *~
+            *          !   constructed to read the alt file with  !     *~
+            *          !   (HIGH_LEVEL% wasn't set yet). 9076 - 77!     *~
+            * 05/21/87 ! Added Hardcoded GLMAIN incld/Excd logic  ! HES *~
+            * 06/03/87 ! Added "User Interrupt" Features.         ! LDJ *~
+            * 10/26/87 ! Now correctly displays 12 char GL acct   ! HES *~
+            * 11/25/87 ! Added 'd' option to DISPLAY argument.    ! LDJ *~
+            *          !   (corrected minor bug - if passed descr !     *~
+            *          !   len = 0 but high level is enabled & a  !     *~
+            *          !   a len for the high level descr was     !     *~
+            *          !   given then had invalid string pos on a !     *~
+            *          !   Word Search or Sounds Like operation.) !     *~
+            * 05/02/88 ! Bug Fix - possible illegal string operand! LDJ *~
+            *          !   line 13190 - added line 13186. deffn'77!     *~
+            * 09/29/88 ! Expanded max print line length to 160.   ! LDJ *~
+            *          !   minor change to prompt text logic.     !     *~
+            * 04/19/89 ! O.S. 7.20/30 Comapatability (WSXIO).     ! KAB *~
+            * 05/11/89 ! Expanded HEADER$ to 5 elements - 4th/5th ! MJB *~
+            *          !  used as 2nd & 3rd title line on report  !     *~
+            * 02/20/91 ! Converted to stub for ZPLOWCOD           ! MJB *~
+            *************************************************************
+
+            sub "PLOWCODE" (arg1, arg2, arg3, arg4, arg5, arg6, arg7,    ~
+                 arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15)
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R6.00.04 02/23/91 BASIC 4.03.01 & SSL Support     "
+        REM *************************************************************
+
+            close ws
+
+            call "ZPLOWCOD" (arg1, arg2, arg3, arg4, arg5,               ~
+                             arg6, arg7, arg8, arg9, arg10,              ~
+                             arg11, arg12, arg13, arg14, arg15)
+
+            end

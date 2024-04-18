@@ -1,0 +1,19 @@
+[ REMANSTORE$ ] string variable used only once
+[ REMANLOT$ ] string variable used only once
+[ F% ] integer variable used only once
+[ CUSCODE$ ] string variable used only once
+[ FREE% ] integer variable used only once
+[ ZONE_OVERIDE$ ] string variable used only once
+[ F% ] integer variable used only once
+[ PART$ ] string variable used only once
+cc: line 7878: warning 5004: Uninitialized variable "g_ima1" in function "HNYMSTSB" (5004)
+cc: line 7878: warning 5004: Uninitialized variable "g_retlab1" in function "HNYMSTSB" (5004)
+[ MONTH% ] integer variable used only once
+[ UDATE$ ] string variable used only once
+[ DAYS% ] integer variable used only once
+[ ROLLUP$ ] string variable used only once
+[ BUCKETS% ] integer variable used only once
+[ F% ] integer variable used only once
+[ RECORD$ ] string variable used only once
+[ TEXT$ ] string variable used only once
+[ RETURNCODE% ] integer variable used only once

@@ -1,0 +1,510 @@
+*       ****************************************************************~
+*          New Family - - -  ( L i n e a l m a t e )                   *~
+*            (PAR000) 01/15/2006 CR347    Dept (???)                   *~
+*                  ( As of 07/10/03 - CMG                      )       *~
+*        EWDPLG42 - Create File with Data for TSO/BSO Saw Optimization *~
+*                                                                      *~
+*            Note(1)Primary Subroutine 'BUILD_SAW_RECS'                *~
+*                   for the New Faily of Windows, for Sash's.          *~
+*                                                                      *~
+*            Note(2)Special Mod to handle the change for DT_REF$8 and  *~
+*                   DT_SEQ$5. Future need to change File Layout to     *~
+*                   handle size changes.                               *~
+*                                                                      *~
+*            Note(3)Modification made to support new Bilco machines    *~
+*                   Added fields 14, 15, 16 and 17. For Machine codes, *~
+*                   Saw Number, and Saw Set-Up Number.                 *~
+*                                                                      *~
+*            Note(4)When changes are made to the following Tables, the *~
+*                   subroutine will need to be modified.               *~
+*                   BUILD_DESCRIPT uses (SCREEN,LOCK,HINGE) Tables     *~
+*                                                                      *~
+*            Note(5)Force CP$() which is the number of pieces to cut   *~
+*                   to one (1), use SET_UP$ to set the number of tracks*~
+*                   to either (2) or (4).                              *~
+*                                                                      *~
+*            Note(6)Adjust Schedule by (100%) Subtract from Schedule   *~
+*                   for both Departments 049 and 052.                  *~
+*                                                                      *~
+*            Note(7)Mod to By-Pass all Sash Windows, Screen Codes      *~
+*                   4, 5, and 6. (Not sent to Linealmate)              *~
+*                                                                      *~
+*            Note(8)Mod to Add new Subroutine CHECK_CUT to Check for   *~
+*                   Sash and Frame Cuts.                               *~
+*                                                                      *~
+*            Note(9)Mod to Add Department '002' to Linealmate bridge   *~
+*                   File 'SAW11'                                       *~
+*                                                                      *~
+*05/19/2014  ! (CUT001) mod to add dim fields to CUTCC           ! CMG *~
+*       ****************************************************************
+
+        sub "EWDPLG42" (size%,           /* Batch Size (No. Windows)  */ ~
+                        sched%,          /* Starting Schedule Number  */ ~
+                        scr_dte$,        /* Production Date Formatted */ ~
+                        scr_dept$,       /* Production Department     */ ~
+                        scr_prod$,       /* Product Line              */ ~
+                        scr_load$,       /* Production Load           */ ~
+                        lk_fn$(),        /* 1,2 Lock with Fin (PAR000)*/ ~
+                        #1,              /* (APCCUTWK) Saw Work File  */ ~
+                        #2,              /* (GENCODES)                */ ~
+                        #4,              /* (APCCUTEQ) Saw Cross Ref  */ ~
+                        #5,              /* (AMTBOMCD) Equation File  */ ~
+                        #6 )             /* (AMTBOMIF) Validity File  */
+
+        dim readkey$24,                  /* GENCODES Primary Key      */ ~
+                                         /* (PAR000)                  */ ~
+            lk_fn$(5%)30,                /* 1%=1Lock,2%=2Lock,3%=WFin */ ~
+            desc$32,                     /* GENCODES Description      */ ~
+            sched$3,                     /* Schedule Numbers          */ ~
+            tsched$3,                    /* Starting Schedule Number  */ ~
+            co$30,                       /* Linealmate Descriptive Not*/ ~
+            c_o$2,                       /* COTTAGE, ORIEL CODE-CO,OR */ ~
+            bat_no$26,                   /* Batch Identifiers ( A-Z ) */ ~
+            bat_rec$149,                 /* Batch Record              */ ~
+            bat$2,                       /* Number of Batches         */ ~
+            apc_scr$120,                 /* Screen Text               */ ~
+            apc_prt$60,                  /* Print Text                */ ~
+            apc_sze$20,                  /* Size                      */ ~
+            scr_dte$8,                   /* Completion Date           */ ~
+            scr_prod$1, scr_dept$3,      /* Product Line              */ ~
+            scr_load$5,                  /* Production Load           */ ~
+            wrk_key1$51,                 /* WORK KEY                  */ ~
+            wrk_rec$200,                 /* WORK RECORD               */ ~
+            seq$3,                       /* Record Number Key         */ ~
+            dtl_load$5,                  /* Load Number               */ ~
+            dtl_part$25,                 /* MFG Part Number           */ ~
+            save_part$25,                /* MFG Part Number           */ ~
+            ref_no$5, dt_ref$8,          /* Part Reference Number     */ ~
+            ssq$3, dt_seq$5,             /* Daily Sequence Number     */ ~
+            dt_samp$1,                   /* 0=NA, 1=SAMP, 2=DISP      */ ~
+            col$(100%)25,                /* Cut Description           */ ~
+            eq$(100%)8,                  /* Equation Codes and Number */ ~
+            ct$(100%)9,                  /* Cut Widths and Heights    */ ~
+            ct(100%),                    /* Cut Wid/Height Decimal    */ ~
+            sh$(100%)1,                  /* Sash Type                 */ ~
+            cr$(100%)10,                 /* Raw Material Part Number  */ ~
+            cp$(100%)2,                  /* Number of Pieces to Cut   */ ~
+            cc$(100%)1,                  /* Cut Piece Yes or No       */ ~
+            tw$1,                        /* WIDTH CUT PARTS           */ ~
+            th$1,                        /* HEIGHT CUT PARTS          */ ~
+            sa_d2$30,                    /* MFG Part Description      */ ~
+            sa_type$(100%)2,             /* RECORD TYPE 'SA' OR 'LA'  */ ~
+            sa_piece$(100%)4,            /* Number of Pieces's to Cut */ ~
+            sa_cut$(100%)9,              /* Cut Size for Piece's      */ ~
+            sa_part$(100%)15,            /* Raw Material Part Number  */ ~
+            sa_rack$(100%)18,            /* Bin Loc and No. of Pieces */ ~
+            sa_d1$(100%)16,              /* Raw Material Description  */ ~
+            sa_m$(100%)8,                /* WINDOW TYPE,PROFILE TYPE  */ ~
+            sa_s$(100%)1,                /* SAW SET-UP NUMBER         */ ~
+            machine$3, set_up$1, lk$1,   /* Store Window Type code    */ ~
+            saw_no$2, saw_no$(100%)2,    /* Machine Saw Number        */ ~
+            ff_nam$7,                    /* Bridge File Name          */ ~
+            file$30,                     /* Schedule Title Name       */ ~
+            inc$10,                      /* Schedule File Identifier  */ ~
+            hdr$40,                      /* ASKUSER Header Text       */ ~
+            msg$(3%)79,                  /* ASKUSER Info Text         */ ~
+            errormsg$79                  /* Error Message Text        */
+
+        dim f2%(10%),                    /* = 0 if the file is open    */~
+            axd$4,                       /*   doesn't exist, or 0 if   */~
+                                         /*   not yet checked (OPENCHCK*/~
+            rslt$(10%)20                 /* Text from file opening     */
+
+                                               /* SET-UP SAW FILE(S)   */
+            select #3,  "@SAW28@",                                       ~
+                                consec , recsize = 149
+
+            ff% = 3% : ff_nam$ = "@SAW28@" 
+
+            cw%, ch% = 0%
+            init(" ") rslt$(), axd$
+                                                 /* Create Saw Batches */
+            call "OPENFILE" (#ff%, "IO   ", f2%(ff%), rslt$(ff%), axd$ )
+            if f2%(ff%) <> 0% then goto L01350
+               gosub file_exists
+               if comp% <> 16% then goto L01310
+                  call "FILEBGON" addr(#ff%)
+                  goto L01350
+
+L01310:        close #ff%
+            call "OPENFILE" (#ff%, "EXTND", f2%(ff%), rslt$(ff%), axd$ )
+               goto L01410
+
+L01350:     str(rslt$(ff%),1%,6%)  = "OUTPTP"
+            str(rslt$(ff%),7%,8%)  = "00001000"
+            str(rslt$(ff%),15%,3%) = "100"
+            str(rslt$(ff%),18%,3%) = "100"
+            call "OPENFILE" (#ff%, "OUTPT", f2%(ff%), rslt$(ff%), axd$ )
+
+L01410:     bat_no$ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+        REM - Adjust Schedule
+            hit% = 0%                        /* Set to (1) When Header */
+            bat_no% = 1% : count% = 0% : save_part$ = " "  /* is Built */
+            convert sched% to tsched$, pic(###)
+
+            call "SHOSTAT" ("Starting TSO/BSO Schedule ("&tsched$&") for " &~
+                                                   "Dept ("&scr_dept$&")")
+            tw$ = "1" : th$ = "2"             /* Load Cut Descriptions */
+            call "APCCUTLD" (scr_prod$, cw%, ch%, tw$, th$, #2, err% )
+            if err% <> 0% then goto exit_program
+            xcount% = 0%
+            wrk_key1$ = all(hex(00))
+                                             /* New Family of Windowsr */
+            read #1,key > wrk_key1$, using L01620 , wrk_key1$, wrk_rec$,   ~
+                                                     eod goto create_done
+            goto L01630
+        create_next
+            read #1, using L01620 , wrk_key1$, wrk_rec$,                   ~
+                                                     eod goto create_done
+L01620:          FMT POS(6), CH(51), CH(200)
+L01630:     dt_ref$   = str(wrk_rec$,1%,8%)
+            dt_seq$   = str(wrk_rec$,9%,5%)
+            dtl_load$ = str(wrk_rec$,29,5%)
+            dtl_part$ = str(wrk_rec$,38%,25%)
+            dt_samp$  = str(wrk_rec$,77%,1%)
+            ref_no$   = str(dt_ref$,4%,5%)
+            ssq$      = str(dt_seq$,3%,3%)
+            s$        = str(dtl_part$,11%,1%)    /* Set Screen Code    */
+                                                 /* Should Not Happen  */
+            p% = pos("45" = s$)
+            if p% = 0% then goto create_next
+
+            if len(dtl_part$) < 19 then goto create_next
+            if count% = 0% then gosub build_schedule   /* CREATE BATCH */
+               gosub build_saw_recs
+               if sa_max% = 0% then goto create_next
+                  seq% = 0%
+                  for sa% = 1% to sa_max%
+                      gosub build_detail
+                  next sa%
+                  count% = count% + 1%
+                  if count% < size%  then goto create_next
+                     gosub build_end
+                     count% = 0% : hit% = 0%
+                     goto create_next
+        create_done
+            gosub build_end
+            close #ff%
+            convert (bat_no% - 1%) to bat$, pic(##)
+        goto exit_program
+
+        build_schedule                         /* SET-UP SCHEDULE REV. */
+          if hit% = 1% then return             /* Schedule has not been*/
+          init(" ") bat_rec$                   /* Completed Yet.       */
+          inc$ = " (" & str(bat_no$,bat_no%,1%) & ")"
+          file$ = "("&scr_dept$&")   Saw for " &scr_dte$& inc$
+          if str(scr_load$,1%,1%) <> "N" then str(file$,6%,2%) = "/U"
+          str(bat_rec$,1%,2%)   = "FR"                  /* FILE REV.   */
+          str(bat_rec$,3%,6%)   = "930318"              /* REVISION NO */
+          str(bat_rec$,9%,141%) = " "                   /* LINE FEED   */
+          write #ff%, bat_rec$, eod goto L02070
+
+          gosub build_schedule_no
+          gosub build_schedule_title
+          hit% = 1%
+        return
+L02070:   call "SHOSTAT" ("(Error) - Writing Revision ????") : stop
+        return
+
+        build_schedule_no
+          init(" ") bat_rec$
+          gosub assign_schedule
+          convert sched% to sched$, pic(000)
+
+          str(bat_rec$,1%,2%) = "SN"                /* SCHEDULE NUMBER */
+          str(bat_rec$,3%,3%) = sched$              /* SCHED (100-999) */
+          str(bat_rec$,6%,144%) = " "               /* LINE FEED       */
+          write #ff%, bat_rec$, eod goto L02200
+        return
+L02200:   call "SHOSTAT" ("(Error) - Writing Schedule Number ??? ")
+          stop
+        return
+
+        build_schedule_title                        /* SCHEDULE TITLE  */
+          init(" ") bat_rec$
+          str(bat_rec$,1%,2%)   = "TI"              /* SCHEDULE TITLE  */
+          str(bat_rec$,3%,30%)  = file$             /* TITLE DESCRIPT  */
+          str(bat_rec$,33%,117%)= " "               /* LINE FEED       */
+          write #ff%, bat_rec$, eod goto L02310
+        return
+L02310:   call "SHOSTAT" ("(Error) - Writing Schedule Title ??? ")
+          stop
+        return
+
+        build_detail
+          xcount% = xcount% + 1%
+          init(" ") bat_rec$
+          seq% = seq% + 1%
+          convert seq% to seq$, pic(###)
+          str(bat_rec$,1%,2%)   = sa_type$(sa%)         /* 'SA' OR 'LA'*/
+          str(bat_rec$,3%,5%)   = ref_no$               /* Load Number */
+          str(bat_rec$,8%,5%)   = "     "
+          str(bat_rec$,13%,3%)  = seq$                  /* Item Number */
+          str(bat_rec$,16%,4%)  = sa_piece$(sa%)        /* Unit Qty    */
+          str(bat_rec$,20%,9%)  = sa_cut$(sa%)          /* Piece Cut   */
+          str(bat_rec$,29%,9%)  = "        "            /* Reserved    */
+          str(bat_rec$,38%,15%) = sa_part$(sa%)         /* Part No.    */
+          str(bat_rec$,58%,4%)  = "    "                /* Reserved    */
+          str(bat_rec$,57%,18%) = sa_rack$(sa%)         /* Harp Rack/  */
+                                                        /* Bin Location*/
+          str(bat_rec$,75%,16%) = sa_d1$(sa%)           /* Part Desc   */
+          str(bat_rec$,91%,30%) = sa_d2$                /* Label Desc  */
+          str(bat_rec$,121%,1%) = " "                   /* Line Feed   */
+          str(bat_rec$,122%,2%) = "  "                  /* No. Labels  */
+          str(bat_rec$,124%,15%)= "               "     /* License Plat*/
+          str(bat_rec$,139%,8%) = sa_m$(sa%)            /* Machine Code*/
+          str(bat_rec$,147%,2%) = saw_no$(sa%)          /* Saw Number  */
+          str(bat_rec$,149%,1%) = sa_s$(sa%)            /* Saw Set-up  */
+                                                        /*  Number     */
+          write #ff%, bat_rec$, eod goto L02620
+        return
+L02620:   call "SHOSTAT" ("(Error) - Writing Schedule Detail ??? ")
+          stop
+        return
+
+        build_end
+          if count% = 0% then return
+          init(" ") bat_rec$
+          str(bat_rec$,1%,2%) = "**"                /* END OF BATCH    */
+          str(bat_rec$,3%,3%) = "END"               /* LINE FEED       */
+          str(bat_rec$,6%,144%) = " "               /* LINE FEED       */
+          write #ff%, bat_rec$, eod goto L02750
+          bat_no% = bat_no% + 1%
+        return
+L02750:   call "SHOSTAT" (errormsg$) : stop
+        return
+
+        build_saw_recs
+          if save_part$ <> dtl_part$ then goto L02850
+             for i% = 1% to sa_max%
+                 str(sa_rack$(i%),5%,9%)  = ssq$& "-A" &ssq$& "/"
+             next i%
+             return
+
+L02850:   save_part$ = dtl_part$
+          init(" ") sa_type$(), sa_piece$(), sa_cut$(), sa_part$(),      ~
+                    sa_rack$(), sa_d1$(), sa_d2$, sa_m$(), sa_s$(), saw_no$()
+
+          call "APCDESCR" (dtl_part$, apc_scr$, apc_prt$, apc_sze$, #6,  ~
+                                                                    err%)
+          sa_d2$ = str(apc_prt$,1%,30%)
+
+          sa% = 0%
+          call "APCCUTCC" (dtl_part$, 0%, 0%, 0%, /* (CUT001) */         ~
+                     0%, cw%, ch%, eq$(), ct$(), cr$(),                  ~
+                     cp$(), cc$(), col$(), ct(), sh$(), tw$, th$,        ~
+                                                        #4, #5, #2, err%)
+
+          if str(dtl_part$,11%,1%) = "4" then gosub get_bso_cut
+          gosub build_descript
+          eq% = cw% + ch%
+          for i% = 1% to eq%
+        REM *RHH*                               /* REMOVE 'LA' RECORDS */
+            if cc$(i%) = "N" or cc$(i%) = " " then goto L03430
+
+            cut% = 0%                    /* Skip - No Equation Records */
+            convert str(ct$(i%),1%,3%) to cut%, data goto L03040
+L03040:
+            if cut% = 0% then goto L03430
+               gosub check_cut                          
+               if check% = 0% then goto L03430          /* Skip Equation */
+
+               sa% = sa% + 1%
+               sa_type$(sa%)  = "SA"
+               if cc$(i%) = "N" then sa_type$(sa%) = "LA"
+/* TO DO:  Does Megan still want to force qty to one??  */
+        REM - Special Mod for Saws
+               if scr_dept$ = "050"then goto L03230
+               cp$(i%) = "01"                      /* Force Quantity   */
+                                                   /* of One (1)       */
+L03230:        sa_piece$(sa%) = "  " & cp$(i%)     /* No Pieces Needed */
+               sa_cut$(sa%)   = ct$(i%)            /* Length of Cut    */
+               if set_up$ <> "1" then goto L03240
+                  ct(i%) = ct(i%) + .8125          /* ADD      13/16   */
+                  init(" ") sa_cut$(sa%)
+                  convert ct(i%) to str(sa_cut$(sa%),1%,7%), pic(###.###)
+
+
+
+L03240:        str(sa_part$(sa%),1%,10%) = cr$(i%) /* Raw Material Part*/
+               str(sa_part$(sa%),11%,1%) = str(dtl_part$,11%,1%)
+               str(sa_part$(sa%),12%,4%) = "     "
+
+               if scr_dept$ = "050" then str(sa_part$(sa%),11%,1%) = "0"
+               if scr_dept$ = "050" and lk$ = "1" then                   ~
+                  str(sa_part$(sa%),11%,1%) = "1"
+
+               if scr_dept$ = "051" then str(sa_part$(sa%),11%,5%) = "5    "
+
+               str(sa_rack$(sa%),1%,4%)  = "@F A"      /* Bin Location */
+               str(sa_rack$(sa%),5%,9%)  = ssq$& "-A" &ssq$& "/"
+               str(sa_rack$(sa%),14%,2%) = cp$(i%)           /* Pieces */
+               str(sa_rack$(sa%),16%,3%) = "   "
+               str(sa_d1$(sa%),1%,2%)    = "0/"    /* No. of Labels    */
+        REM    STR(SA_D1$(SA%),3%,12%)   = STR(COL$(I%),1%,12%)
+               str(sa_d1$(sa%),3%,12%)   = str(co$,1%,12%)
+               str(sa_d1$(sa%),15%,2%)   = "/-"
+
+               if scr_dept$ <> "051" then goto L03250
+                    if dt_samp$ = "1" or dt_samp$ = "2" then                  ~
+                                         str(sa_d1$(sa%),15%,2%) = "/S"
+                    if str(co$,1%,1%) = "9" then                              ~
+                                         str(sa_d1$(sa%),15%,2%) = "/B"
+                                                       /* Set Machine Codes */
+                    if i% <= cw% then str(sa_m$(sa%),1%,8%) = "H       "      ~
+                                 else str(sa_m$(sa%),1%,8%) = "J       "
+                    goto L03430
+
+
+L03250:        if scr_dept$ = "050" then goto L03420
+               if set_up$ = "1" then str(sa_d1$(sa%),15%,2%) = "4"       ~
+                                else str(sa_d1$(sa%),15%,2%) = "2"
+L03420:
+               sa_m$(sa%)   = machine$ & "     "
+               sa_s$(sa%)   = set_up$
+               saw_no$(sa%) = saw_no$
+L03430:      next i%
+             sa_max% = sa%
+        return
+
+        build_descript
+            init(" ") co$, x$, s$, readkey$, c_o$, lk$
+            cnt% = 3%                            /* 1st Set Model Code */
+            str(co$,1%,3%) = str(dtl_part$,1%,3%)
+            s$ = str(dtl_part$,11%,1%)           /* Set Screen Code    */
+            x$ = str(dtl_part$,12%,1%)           /* Set Lock Code      */
+                                                 /* (PAR000)           */
+            p% = pos(lk_fn$(1%) = x$)            /* 1 Lock Codes       */
+            if p% = 0% then goto L03570
+               str(co$,cnt%+1%,3%) = "/1K"
+               lk$ = "1"
+               goto L03600
+                                                 /* (PAR000)           */
+L03570:     p% = pos(lk_fn$(2%) = x$)            /* 2 Lock Codes       */
+            if p% = 0% then goto L03610
+               str(co$,cnt%+1%,3%) = "/2K"
+               lk$ = "2"
+L03600:     cnt% = cnt% + 3%
+L03610:     p% = pos("456" = s$)
+            if p% = 0% then goto L03670
+               str(co$,cnt%+1%,3%) = "/TS"         /* Set as Default   */
+               if s$ = "5" then str(co$,cnt%+1%,3%) = "/BS"
+               if s$ = "6" then str(co$,cnt%+1%,3%) = "/FG"
+               cnt% = cnt% + 3%
+                                                   /* (PAR000)         */
+L03670:     p% = pos(lk_fn$(3%) = x$)              /* With Fin Codes   */
+            if p% = 0% then goto L03710
+               str(co$,cnt%+1%,3%) = "/WF"         /* Set With Fin     */
+               cnt% = cnt% + 3%
+L03710:     str(readkey$,1%,9%)   = "HINGE    "    /* Check Cot/Oriel  */
+            str(readkey$,10%,15%) = str(dtl_part$,9%,2%)
+            read #2,key = readkey$, using L03740, desc$, eod goto L03900
+L03740:        FMT POS(25), CH(32)
+            p% = pos(desc$ = "-")
+            if str(desc$,1%,2%) <> "CO" and str(desc$,1%,2%) <> "OR"     ~
+                                        then goto L03830
+               str(co$,cnt%+1%,3%) = "/CO"         /* Set as Default   */
+               c_o$ = "CO"
+               if str(desc$,1%,2%) = "OR" then str(co$,cnt%+1%,3%)="/OR"
+               if str(desc$,1%,2%) = "OR" then c_o$ = "OR"
+               cnt% = cnt% + 3%
+L03830:     if p% = 0% then goto L03900
+            if str(desc$, p%+2%, 4%) <> "TWIN" and                       ~
+               str(desc$, p%+2%, 4%) <> "TRPL" then goto L03900
+                  str(co$, cnt%+1%,3%) = "/TW"     /* Set as Default   */
+                  if str(desc$,p%+2%,4%) = "TRPL" then                   ~
+                     str(co$, cnt%+1%,3%) = "/TR"
+               cnt% = cnt% + 3%
+L03900:     if str(dtl_part$,9%,2%) <> "09" then goto L03940
+               str(co$,cnt%+1%,3%) = "/33"                 /* 1/3,1/3  */
+               cnt% = cnt% + 3%
+
+L03940: return
+
+        file_exists
+            comp% = 2%
+            hdr$ = "** Optimization File Exists **"
+            msg$(1%)= "        The File ("&ff_nam$&") Already Exists.   "
+            msg$(2%)= "             O P T I M I Z A T I O N             "
+            msg$(3%)= "Press <RETURN> To Continue, or PF(16) to Delete. "
+            call "ASKUSER" (comp%, hdr$, msg$(1%), msg$(2%), msg$(3%))
+        return
+
+        check_cut
+            check% = 0%
+            init(" ") readkey$, machine$, set_up$, saw_no$, desc$
+            str(readkey$,1%,9%)  = "NEWFAMILY"
+            str(readkey$,10%,1%) = "S"               /* F = Frame Saws */
+                                                     /* S = Sash Saws  */
+            str(readkey$,11%,3%) = str(dtl_part$,1%,3%)
+REM            str(readkey$,14%,1%) = "W"               /* W = Width Cut  */
+REM            if c_o$ = "CO" then str(readkey$,14%,1%) = "3" /* COTTAGE  */
+REM            if c_o$ = "OR" then str(readkey$,14%,1%) = "4" /* ORIEL    */
+REM            if i% > cw% then str(readkey$,14%,1%) = "H"/* H=Height Cut */
+            str(readkey$,14%,1%) = "6"
+            if str(dtl_part$,11%,1%) = "5" then str(readkey$,14%,1%) = "8"
+
+            if i% > cw% then str(readkey$,14%,1%) = "7"
+            if i% > cw% and str(dtl_part$,11%,1%) = "5"                 ~
+                                then str(readkey$,14%,1%) = "9"
+
+            str(readkey$,15%,2%) = str(eq$(i%),7%,2%)  /* Equation No. */
+            read #2,key = readkey$, using L04180 , desc$, eod goto L04240
+L04180:       FMT POS(25), CH(10)
+
+            if scr_dept$ = "050" or scr_dept$ = "051" then goto L04240
+
+               machine$ = str(desc$,1%,3%)           /* Machine Code   */
+
+            if i% > cw% then goto L04185 
+               if scr_dept$ = "002" and lk$ = "1" then                   ~
+                  str(machine$,1%,1%) = "0"
+
+               if scr_dept$ = "007" and lk$ = "1" then                   ~
+                  str(machine$,3%,1%) = "1"
+L04185:
+
+                                                     /* (EWD001)       */
+               set_up$  = str(desc$,5%,1%)           /* Set-Up Code    */
+               saw_no$  = str(desc$,7%,2%)           /* Saw Number     */
+               check%   = 1%                         /* Valid Equation */
+
+L04240: return
+
+        assign_schedule
+            init(" ") readkey$, sched$
+            str(readkey$,1%,9%)   = "PLANSCHED"
+            str(readkey$,10%,15%) = "LINEALMA"
+            read #2,hold,key = readkey$, using L04320 , sched$,            ~
+                                                           eod goto L04400
+L04320:       FMT POS(25), CH(3)
+            convert sched$ to sched%, data goto L04400
+
+            convert (sched% + 1%) to sched$, pic(000)
+            if (sched% + 1%) > 999% then sched$ = "100"
+            put #2, using L04320 , sched$
+            rewrite #2
+        return
+L04400:    call "SHOSTAT" ("Error- Assigning Schedule Number?")
+           stop
+        return
+ 
+        get_bso_cut
+          str(dtl_part$,11%,1%) = "5"
+          call "APCCUTCC" (dtl_part$, 0%, 0%, 0%, /* (CUT001) */         ~
+                     0%, cw%, ch%, eq$(), ct$(), " ",                    ~
+                     cp$(), cc$(), col$(), ct(), sh$(), tw$, th$,        ~
+                                                        #4, #5, #2, err%)
+
+
+          str(dtl_part$,1%,25%) = str(save_part$,1%,25%) 
+        return
+
+        exit_program
+          if xcount% > 0% then goto L04500
+             call "SHOSTAT" ("N O   L I N E A L M A T E   D A T A")
+             call "PAUSE" addr(300%)
+
+L04500: end
+

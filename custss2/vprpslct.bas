@@ -1,0 +1,526 @@
+        REM CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC~
+            *                                                           *~
+            *  V   V  PPPP   RRRR   PPPP    SSS   L       CCC   TTTTT   *~
+            *  V   V  P   P  R   R  P   P  S      L      C   C    T     *~
+            *  V   V  PPPP   RRRR   PPPP    SSS   L      C        T     *~
+            *   V V   P      R  R   P          S  L      C   C    T     *~
+            *    V    P      R   R  P       SSS   LLLLL   CCC     T     *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * VPRPSLCT - Cross Reference Inventory to Vendor Price      *~
+            *            Catalogue for the passed in Part Number.       *~
+            *            Allows user to select the Vendor P/N to use.   *~
+            *            Returning vendor part number and optionally the*~
+            *            selected vendor if not passed in.              *~
+            *            If Vendor Code passed in with Part Code only   *~
+            *            Vendor Price records for that Part/Vendor      *~
+            *            combination will be displayed.                 *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1983, AN UNPUBLISHED WORK BY CAELUS ASSSO-  *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 09/15/83 ! ORIGINAL                                 ! KEN *~
+            * 05/06/86 ! Renamed from HNYVREF to VPRPSLCT, added  ! LDJ *~
+            *          !   support for the Next/Special price     !     *~
+            *          !   field, changed screen format & PF keys.!     *~
+            * 06/16/86 ! Changed to allow display of single entry ! LDJ *~
+            *          !   when in Inquiry Mode (MFLAG=0% or 10%).!     *~
+            * 12/18/86 ! Changed to allow display of pending      ! LDJ *~
+            *          !   procurements (open P.O. Line Items).   !     *~
+            * 02/12/93 ! Added Multi-Currency.                    ! JDH *~
+            * 03/24/93 ! PRR 12118.  Pending Purchase screen now  ! JDH *~
+            *          !   excludes items with zero open qty.     !     *~
+            * 06/28/96 ! Add blank date for tests                 ! DER *~
+            * 12/20/99 ! Mod to change vendor's price to allow    ! CMG *~
+            *          !     five decimal places.  (EWD0001)      !     *~
+            CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC
+
+        sub "VPRPSLCT" (part$,           /* Part Number                */~
+                       vendor$,          /* Vendor Code                */~
+                       venpart$,         /* Vendor Part Number (return)*/~
+                       mflag%,           /* Message Flag; 0%=No Prompt */~
+                                         /*   1% = Select for Return ""*/~
+                                         /*   2% = Select for Edit   ""*/~
+                                         /*  10% = No Prompt   - No PF8*/~
+                                         /*  11% = Select for Return ""*/~
+                                         /*  12% = Select for Edit   ""*/~
+                       only_one$,        /* Only One Record? 'Y' if    */~
+                                         /*   only 1 record, 'X' if    */~
+                                         /*   none, or 'N' if many.    */~
+                                         /*   This is a returned value.*/~
+                       #1,               /* VENPRICE File UFB          */~
+                       #2,               /* HNYMASTR File UFB          */~
+                       #4,               /* VENDOR   File UFB          */~
+                       #3)               /* HNYPROC  File UFB          */
+
+        dim                                                              ~
+            blank_date$8,                /* Blank date for tests       */~
+            curr$(20)4,                  /* Currency Code              */~
+            cursor%(2),                  /* Screen Cursor Position     */~
+            date$8,                      /* Today's Date               */~
+            dummy$1,                     /* Dummy Character            */~
+            descr_map(18),               /* PLOWCODE Argument          */~
+            edtmessage$79,               /* Edit Screen Message        */~
+            effdate$6,                   /* Next Price Effective Date  */~
+            expdate$6,                   /* Next Price Expiration Date */~
+            hdr$(3)80,                   /* PLOWCODE Argument          */~
+            header$79,                   /* Column Header Line         */~
+            i$(24)80,                    /* Screen Image from SCREEN   */~
+            incl_excl(2),                /* PLOWCODE Argument          */~
+            incl_excl$(2)25,             /* PLOWCODE Argument          */~
+            lfac$(20)1,                  /* Field Attribute Characters */~
+            line2$79,                    /* Screen Header Line         */~
+            mc_on$1,                     /* Is Multi-Currency Active?  */~
+            mc_tbl$1,                    /* Multi-Currency Table for PO*/~
+            meas$(20)4,                  /* Vendor Unit of Measure     */~
+            mfac$(20)1,                  /* Field Attribute Characters */~
+            msg$80,                      /* PLOWCODE Argument          */~
+            only_one$1,                  /* Only One Record? Y,N, or X */~
+            part$25,                     /* Part Code                  */~
+            partdescr$34,                /* Part Description           */~
+            partvendor$9,                /* Primary Vendor             */~
+            pf5$16,                      /* PF5 Screen Literal         */~
+            pf8$30,                      /* PF8 Screen Literal         */~
+            pf10$19, pf10k$1,            /* PF10 Screen Literal        */~
+            plowkey$99,                  /* PLOWCODE Argument          */~
+            price_curr$(20)21,           /* Vendor Prices - Actual     */~
+            price_stat$(20)21,           /* Vendor Prices - Statutory  */~
+            readkey$60,                  /* Miscellaneous Read/Plow key*/~
+            stat$4,                      /* Statutory Currency Code    */~
+            t$(15)1,                     /* Tab Stops                  */~
+            toggle2$(20)4,               /* Toggle Currency/UOM        */~
+            uom$4,                       /* Parts Stocking UOM         */~
+            vend_descr$(20)30,           /* Vendor Description         */~
+            vendor$9,                    /* Vendor Code                */~
+            vendor$(20)9,                /* Vendors - Screen Table     */~
+            venpart$25,                  /* Vendor Part Number         */~
+            venpart$(20)25,              /* Vendor Part Number         */~
+            venprice$(20)21,             /* Vendor Prices - Screen     */~
+            veneach$(20)10,              /* Vendor Prices Converted    */~
+            veneach_curr$(20)10,         /* Vendor Prices Converted    */~
+            veneach_stat$(20)10          /* Vendor Prices Converted    */
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R7.00.00 10/29/97 Year 2000 Compliancy            "
+        REM *************************************************************
+
+        REM *************************************************************~
+            *                  S E L E C T   F I L E S                  *~
+            *-----+----------+------------------------------------------*~
+            *FILE#!  PRNAME  ! D E S C R I P T I O N                    *~
+            *-----+----------+------------------------------------------*~
+            * # 5 ! VBKLINES ! Backlog line item file                   *~
+            * #12 ! SYSFILE2 ! Caelus Management System General Informa *~
+            * #45 ! VBKLNCUR ! Currency Line Item Information           *~
+            *************************************************************~
+            *                                                           *
+
+            select # 5, "VBKLINES",                                      ~
+                        varc,                                            ~
+                        indexed,                                         ~
+                        recsize =  700,                                  ~
+                        keypos =    1, keylen =  28
+
+            select #12,  "SYSFILE2",                                     ~
+                        varc,     indexed,  recsize =  500,              ~
+                        keypos =    1, keylen =  20
+
+            select #45, "VBKLNCUR",                                      ~
+                        varc, indexed, recsize = 100,                    ~
+                        keypos = 5, keylen = 28,                         ~
+                        alt key 1, keypos = 1, keylen = 32
+
+            if been_here_before% = 1% then L09063
+                call "OPENCHCK" (#12, 0%, f2%, 0%, " ")
+                been_here_before% = 1%
+
+        REM *************************************************************~
+            *                I N I T I A L I Z A T I O N                *~
+            *                                                           *~
+            * INITIALIZES INFORMATION NECESSARY FOR PROGRAM.            *~
+            *************************************************************
+
+            date$ = date : call "DATEFMT" (date$)
+            blank_date$ = " " : call "DATUNFMT" (blank_date$)
+
+*        Check for Multi-Currency
+            mc_on$ = "N" : stat$, pf10$ = " " : pf10k$ = hex(ff)
+            readkey$ = "SWITCHS.CUR         "
+            call "READ100" (#12, readkey$, f12%)
+            if f12% <> 0% then get #12 using L09026, mc_on$, stat$, mc_tbl$
+L09026:         FMT POS(21), CH(1), CH(4), POS(28), CH(1)
+            if mc_on$ <> "Y" then L09063
+                pf10k$ = hex(0a)
+                pf10$ = "(10)Currency Toggle"
+
+L09063:     header$="  Vendor     Vendor Part Number        UOM        Pr~
+        ~ice/Quantity   (     Price)"
+            str(header$,13%,1%) = hex(a4)
+            str(header$,39%,1%) = hex(a4)
+            str(header$,45%,1%) = hex(a4)
+            str(header$,66%,1%) = hex(a4)
+            edtmessage$ = " "
+            if mflag% = 1% then                                          ~
+            edtmessage$="To Select Vendor/Part, Position Cursor and Press~
+        ~ RETURN, or PF16 to Exit"
+            if mflag% = 2% then                                          ~
+            edtmessage$="To Edit a Vendor Part, Position Cursor and Press~
+        ~ RETURN, or PF16 to Exit"
+            only_one$ = "X"
+            if mflag% < 10% then pf8$ = "(8)View Procurement History"    ~
+                            else pf8$ = " "
+            init (hex(00)) readkey$
+            str(readkey$,1,25)=str(part$,1,25)
+                ll%=25%
+            if vendor$=" " then L09190
+               str(readkey$,26,9)=str(vendor$,1,9)
+                  ll%=34%
+
+L09190:     call "PLOWNEXT" (#1,readkey$, ll% ,f1%)
+            if f1%=0 then endnone
+
+            init (" ") partdescr$, partvendor$
+            call "DESCRIBE" (#2, part$, partdescr$, 1%, f1%)
+                if f1% = 0% then endnone
+                   get #2 using L09260, uom$, partvendor$
+L09260:                FMT POS(74), CH(4), POS(102), CH(9)
+                   str(header$,69%,4%) = uom$
+
+        REM *************************************************************~
+            *        E D I T   M O D E   M A I N   P R O G R A M        *~
+            *                                                           *~
+            * HANDLES OPERATION OF EDIT MODE FOR DATA ENTRY SCREENS     *~
+            *************************************************************
+
+            gosub startarray
+            if max% > 1% then L10120
+               if max% = 1% then only_one$ = "Y"
+               if max% = 1% and (mflag% = 0% or mflag% = 10%) then L10120
+               fieldnr%=1%
+               goto setend
+
+L10120:     gosub'111(0%)
+                  if keyhit%  =  2 then gosub startarray
+                  if keyhit%  =  5 then gosub continuearray
+                  if keyhit%  =  8 then gosub procurement_history
+                  if keyhit%  = 14 then gosub pending_procurements
+                  if keyhit%  = 16 then       endnone
+                  if keyhit% <>  0 then       L10120
+            fieldnr% = cursor%(1) - 5
+            if fieldnr% < 1 or fieldnr% >  max% then L10120
+            only_one$ = "N"
+            goto setend
+
+        procurement_history
+            if mflag% > 9% then return
+            fieldnr% = cursor%(1) - 5
+            save_vendor$ = vendor$
+            if fieldnr% < 1 or fieldnr% >  max% then L10280
+               vendor$=vendor$(fieldnr%)
+L10280:     call "HNYPRCSB" (vendor$, part$, 1%, #3, #2, #4, #1)
+            vendor$ = save_vendor$
+            return
+
+        pending_procurements
+            call "OPENCHCK" (#5, 0%, f2%, 0%, " ")
+            if f2% <> 0% then return
+            if mc_on$ = "Y" then call "OPENCHCK" (#45, 0%, f2%, 0%, " ")
+            fieldnr% = cursor%(1%) - 5%
+            save_vendor$, plowkey$  = " "
+            mat incl_excl = zer
+            break% = 0%
+            if fieldnr% < 1% or fieldnr% >  max% then L10390
+               save_vendor$ = vendor$(fieldnr%)
+               plowkey$     = vendor$(fieldnr%)
+               break% = 9%
+L10390:     incl_excl(01%) =  32.25 : incl_excl$(01%) = part$
+            hdr$(3%) = hex(ac) & "Pending Purchases for Part " & part$
+            str(hdr$(3%),64%) = "VPRPLSCT:" & str(cms2v$,,8%)
+            msg$ = hex(06) & "Shown below are the Pending P.O.'s for " & ~
+                             "All Vendors we purchase this part from"
+            if save_vendor$ > " " then msg$ = hex(06) & "Below are "     ~
+                & "the Pending P.O.'s from Vendor " & save_vendor$ &     ~
+                  " " & vend_descr$(fieldnr%)
+            hdr$(1%) = "  Vendor Code"
+            str(hdr$(1%),28%) = "P.O. Number"
+            str(hdr$(1%),44%) = "Itm"
+            str(hdr$(1%),48%) = "Ord Qty/Left"
+            str(hdr$(1%),61%) = "Unit Price"
+            str(hdr$(1%),72%) = "Due Date"
+            if mc_on$ = "Y" then str(hdr$(1%),72%) = "Due/Curr"
+            descr_map(01%) = 01.09 : descr_map(02%) = 01     /* Vendor# */
+            descr_map(03%) = 10.16 : descr_map(04%) = 26     /* P.O. #  */
+            descr_map(05%) = 29.03 : descr_map(06%) = 42     /* Item #  */
+            descr_map(07%) = 93.08 : descr_map(08%) = 47.1040/* Ord Qty */
+            descr_map(09%) =117.08 : descr_map(10%) = 59.1072/* Price   */
+            descr_map(11%) =142.061: descr_map(12%) = 70     /*Due Date */
+            descr_map(13%) =-40.30 : descr_map(14%)=1010     /*Vend Name*/
+            descr_map(17%) =109.08 : descr_map(18%)=1048.1040/*Qty Left */
+            if mc_on$ <> "Y" then L10600
+            descr_map(13%) = -1.04 : descr_map(14%)=1070     /*Currency */
+            descr_map(15%) =-33.08 : descr_map(16%)=1059.1072/*Cur Price*/
+L10600:     incl_excl(02%)=-109.08                        /* Remain Qty */
+            put incl_excl$(02%) using L10604, 0
+L10604:         FMT PD(14,4)
+            break% = break% + 9000%
+            if mc_on$ = "Y" then L10650
+            call "PLOWCODE" (#5, plowkey$, msg$,break%,.3, f1%, hdr$(),  ~
+               0,-1,incl_excl(), incl_excl$(), "D", "Y", #4, descr_map())
+            return
+L10650:     call "PLOWCODE" (#5, plowkey$, msg$,break%,.3, f1%, hdr$(),  ~
+               0,-1,incl_excl(), incl_excl$(), "D", "Y", #45, descr_map())
+            return
+        startarray
+            init (hex(00)) str(readkey$,ll%+1%)
+
+        continuearray
+
+            init (" ") vendor$(), venpart$(), venprice$(), meas$(),      ~
+                       veneach$(), t$(), toggle2$(), vend_descr$(),      ~
+                       price_curr$(), price_stat$(), curr$(),            ~
+                       veneach_curr$(), veneach_stat$()
+            init (hex(8c)) lfac$(), mfac$()
+            p%, max% = 0%
+            str(header$,40%,4%) = "UOM"
+            if mc_on$ <> "Y" then L20170
+                str(header$,40%,4%) = "Curr"
+                str(header$,46%,4%) = "Curr"
+
+L20170:     if max%=15% then L20370
+            call "PLOWNEXT" (#1,readkey$,ll%,f1%)
+            if f1%=0 then L20370
+            max%=max%+1
+            t$(max%) = hex(0b) : mfac$(max%) = hex(86)
+            get #1, using L20230, vendor$(max%), venpart$(max%), prce,    ~
+                       meas$(max%), factor, nextprice, effdate$,expdate$,~
+                       curr$(max%)
+L20230:         FMT XX(34),CH(9),CH(25),PD(15,5), XX(12), CH(4),PD(14,4),~
+                    PD(14,5), CH(6), CH(6), POS(158), CH(4)  /*  (EWD0001)  */
+            call "DESCRIBE" (#4, vendor$(max%), vend_descr$(max%), 1%,   ~
+                                                                     f4%)
+            if f4% = 0% then vend_descr$(max%) = "(Not on File.)"
+            if curr$(max%) = " " then curr$(max%) = stat$
+            toggle2$(max%) = curr$(max%) /* Initialize to 'currency' */
+            if mc_on$ <> "Y" then toggle2$(max%) = meas$(max%)
+            if factor <= 0 or factor > 1000000 then factor = 1
+            if effdate$ = blank_date$ then L20270
+            if date < effdate$ or date > expdate$ then L20270
+               prce = nextprice
+L20270:     call "CONVERT" (prce, 2.5, str(venprice$(max%),1,10))
+            call "CONVERT" (factor, -2.5, str(venprice$(max%),12,10))
+            str(venprice$(max%),11,1) = "/"
+            str(price_curr$(max%)) = str(venprice$(max%))
+            str(price_stat$(max%)) = str(venprice$(max%))
+
+            each = round(prce/factor,7)
+            call "CONVERT" (each, 2.4, veneach$(max%))
+            str(veneach_curr$(max%)) = str(veneach$(max%))
+            str(veneach_stat$(max%)) = str(veneach$(max%))
+            gosub curr_to_stat
+
+            lfac$(max%) = hex(8c)
+               if vendor$(max%) = partvendor$ then lfac$(max%) = hex(84)
+            goto L20170
+
+L20370:     if vendor$(1%)=" " then goto startarray
+            return
+
+        endnone
+            venpart$=" "
+            end
+
+        setend
+            venpart$=venpart$(fieldnr%)
+            vendor$=vendor$(fieldnr%)
+            end
+
+        curr_to_stat
+            if mc_on$ <> "Y" then return
+            if curr$(max%) = stat$ then return
+            if max% = 1% then L20640
+                if curr$(max%) = curr$(max% - 1%) then L20710
+L20640:     call "CURRATSB" (curr$(max%), mc_tbl$, date, cur_factor,    ~
+                                                         temp, errormsg$)
+            if errormsg$ = " " then L20710
+                errormsg$ = " " : temp = 1  /* TEMP is not used */
+                price_stat$(max%)   = "???????.??"  /* No Rates on file */
+                veneach_stat$(max%) = "???????.??"  /* No Rates on file */
+                return
+L20710:     call "CONVERT" (prce * cur_factor, 2.5,                      ~
+                                           str(price_stat$(max%),1%,10%))
+            call "CONVERT" (each * cur_factor, 2.4, veneach_stat$(max%))
+            return
+
+        REM *************************************************************~
+            *       E D I T   M O D E   S C R E E N   P A G E   1       *~
+            *                                                           *~
+            * SCREEN FOR EDITING PAGE 1 OF DOCUMENT.                    *~
+            *************************************************************
+
+            deffn'111(fieldnr%)
+            line2$ = "Part: " & part$ & " " & partdescr$
+            str(line2$,61%) = " VPRPSLCT: " & str(cms2v$,,8%)
+            if max% > 14% then pf5$ = "(5)Next Screen" else pf5$ = " "
+
+L40100:     accept                                                       ~
+               at (01,02),                                               ~
+                  "Vendor Price Catalogue Reference By Part",            ~
+               at (01,66), "Today:",                                     ~
+               at (01,73), fac(hex(8c)), date$                  , ch(08),~
+               at (02,02), fac(hex(ac)), line2$                 , ch(79),~
+               at (04,04), "(The BRIGHT Vendor (if any) is the Preferred/~
+        ~Primary Vendor for this Part)",                                  ~
+               at (05,02), fac(hex(a4)), header$                , ch(79),~
+               at (06,02), fac(hex(82)),     dummy$             , ch( 1),~
+               at (06,02), fac(mfac$(01)),   t$(01)             , ch( 1),~
+               at (07,02), fac(mfac$(02)),   t$(02)             , ch( 1),~
+               at (08,02), fac(mfac$(03)),   t$(03)             , ch( 1),~
+               at (09,02), fac(mfac$(04)),   t$(04)             , ch( 1),~
+               at (10,02), fac(mfac$(05)),   t$(05)             , ch( 1),~
+               at (11,02), fac(mfac$(06)),   t$(06)             , ch( 1),~
+               at (12,02), fac(mfac$(07)),   t$(07)             , ch( 1),~
+               at (13,02), fac(mfac$(08)),   t$(08)             , ch( 1),~
+               at (14,02), fac(mfac$(09)),   t$(09)             , ch( 1),~
+               at (15,02), fac(mfac$(10)),   t$(10)             , ch( 1),~
+               at (16,02), fac(mfac$(11)),   t$(11)             , ch( 1),~
+               at (17,02), fac(mfac$(12)),   t$(12)             , ch( 1),~
+               at (18,02), fac(mfac$(13)),   t$(13)             , ch( 1),~
+               at (19,02), fac(mfac$(14)),   t$(14)             , ch( 1),~
+               at (20,02), fac(mfac$(15)),   t$(15)             , ch( 1),~
+                                                                         ~
+               at (06,04), fac(lfac$( 1)), vendor$(1)           , ch( 9),~
+               at (07,04), fac(lfac$( 2)), vendor$(2)           , ch( 9),~
+               at (08,04), fac(lfac$( 3)), vendor$(3)           , ch( 9),~
+               at (09,04), fac(lfac$( 4)), vendor$(4)           , ch( 9),~
+               at (10,04), fac(lfac$( 5)), vendor$(5)           , ch( 9),~
+               at (11,04), fac(lfac$( 6)), vendor$(6)           , ch( 9),~
+               at (12,04), fac(lfac$( 7)), vendor$(7)           , ch( 9),~
+               at (13,04), fac(lfac$( 8)), vendor$(8)           , ch( 9),~
+               at (14,04), fac(lfac$( 9)), vendor$(9)           , ch( 9),~
+               at (15,04), fac(lfac$(10)), vendor$(10)          , ch( 9),~
+               at (16,04), fac(lfac$(11)), vendor$(11)          , ch( 9),~
+               at (17,04), fac(lfac$(12)), vendor$(12)          , ch( 9),~
+               at (18,04), fac(lfac$(13)), vendor$(13)          , ch( 9),~
+               at (19,04), fac(lfac$(14)), vendor$(14)          , ch( 9),~
+               at (20,04), fac(lfac$(15)), vendor$(15)          , ch( 9),~
+                                                                         ~
+               at (06,15), fac(lfac$(1) ), venpart$  (1)        , ch(25),~
+               at (07,15), fac(lfac$(02)), venpart$  (2)        , ch(25),~
+               at (08,15), fac(lfac$(03)), venpart$  (3)        , ch(25),~
+               at (09,15), fac(lfac$(04)), venpart$  (4)        , ch(25),~
+               at (10,15), fac(lfac$(05)), venpart$  (5)        , ch(25),~
+               at (11,15), fac(lfac$(6)), venpart$  (6)         , ch(25),~
+               at (12,15), fac(lfac$(7)), venpart$  (7)         , ch(25),~
+               at (13,15), fac(lfac$(8)), venpart$  (8)         , ch(25),~
+               at (14,15), fac(lfac$(9)), venpart$  (9)         , ch(25),~
+               at (15,15), fac(lfac$(10)),venpart$  (10)        , ch(25),~
+               at (16,15), fac(lfac$(11)),venpart$  (11)        , ch(25),~
+               at (17,15), fac(lfac$(12)),venpart$  (12)        , ch(25),~
+               at (18,15), fac(lfac$(13)),venpart$  (13)        , ch(25),~
+               at (19,15), fac(lfac$(14)),venpart$  (14)        , ch(25),~
+               at (20,15), fac(lfac$(15)),venpart$  (15)        , ch(25),~
+                                                                         ~
+               at (06,41), fac(lfac$(01)), toggle2$  (01)       , ch(04),~
+               at (07,41), fac(lfac$(02)), toggle2$  (02)       , ch(04),~
+               at (08,41), fac(lfac$(03)), toggle2$  (03)       , ch(04),~
+               at (09,41), fac(lfac$(04)), toggle2$  (04)       , ch(04),~
+               at (10,41), fac(lfac$(05)), toggle2$  (05)       , ch(04),~
+               at (11,41), fac(lfac$(06)), toggle2$  (06)       , ch(04),~
+               at (12,41), fac(lfac$(07)), toggle2$  (07)       , ch(04),~
+               at (13,41), fac(lfac$(08)), toggle2$  (08)       , ch(04),~
+               at (14,41), fac(lfac$(09)), toggle2$  (09)       , ch(04),~
+               at (15,41), fac(lfac$(10)), toggle2$  (10)       , ch(04),~
+               at (16,41), fac(lfac$(11)), toggle2$  (11)       , ch(04),~
+               at (17,41), fac(lfac$(12)), toggle2$  (12)       , ch(04),~
+               at (18,41), fac(lfac$(13)), toggle2$  (13)       , ch(04),~
+               at (19,41), fac(lfac$(14)), toggle2$  (14)       , ch(04),~
+               at (20,41), fac(lfac$(15)), toggle2$  (15)       , ch(04),~
+                                                                         ~
+               at (06,47), fac(lfac$(01)), venprice$ (01)       , ch(21),~
+               at (07,47), fac(lfac$(02)), venprice$ (02)       , ch(21),~
+               at (08,47), fac(lfac$(03)), venprice$ (03)       , ch(21),~
+               at (09,47), fac(lfac$(04)), venprice$ (04)       , ch(21),~
+               at (10,47), fac(lfac$(05)), venprice$ (05)       , ch(21),~
+               at (11,47), fac(lfac$(06)), venprice$ (06)       , ch(21),~
+               at (12,47), fac(lfac$(07)), venprice$ (07)       , ch(21),~
+               at (13,47), fac(lfac$(08)), venprice$ (08)       , ch(21),~
+               at (14,47), fac(lfac$(09)), venprice$ (09)       , ch(21),~
+               at (15,47), fac(lfac$(10)), venprice$ (10)       , ch(21),~
+               at (16,47), fac(lfac$(11)), venprice$ (11)       , ch(21),~
+               at (17,47), fac(lfac$(12)), venprice$ (12)       , ch(21),~
+               at (18,47), fac(lfac$(13)), venprice$ (13)       , ch(21),~
+               at (19,47), fac(lfac$(14)), venprice$ (14)       , ch(21),~
+               at (20,47), fac(lfac$(15)), venprice$ (15)       , ch(21),~
+                                                                         ~
+               at (06,70), fac(lfac$(01)), veneach$ (01)        , ch(10),~
+               at (07,70), fac(lfac$(02)), veneach$ (02)        , ch(10),~
+               at (08,70), fac(lfac$(03)), veneach$ (03)        , ch(10),~
+               at (09,70), fac(lfac$(04)), veneach$ (04)        , ch(10),~
+               at (10,70), fac(lfac$(05)), veneach$ (05)        , ch(10),~
+               at (11,70), fac(lfac$(06)), veneach$ (06)        , ch(10),~
+               at (12,70), fac(lfac$(07)), veneach$ (07)        , ch(10),~
+               at (13,70), fac(lfac$(08)), veneach$ (08)        , ch(10),~
+               at (14,70), fac(lfac$(09)), veneach$ (09)        , ch(10),~
+               at (15,70), fac(lfac$(10)), veneach$ (10)        , ch(10),~
+               at (16,70), fac(lfac$(11)), veneach$ (11)        , ch(10),~
+               at (17,70), fac(lfac$(12)), veneach$ (12)        , ch(10),~
+               at (18,70), fac(lfac$(13)), veneach$ (13)        , ch(10),~
+               at (19,70), fac(lfac$(14)), veneach$ (14)        , ch(10),~
+               at (20,70), fac(lfac$(15)), veneach$ (15)        , ch(10),~
+                                                                         ~
+               at (21,02), fac(hex(a4)),   edtmessage$          , ch(79),~
+               at (22,65), "(13)Instructions",                           ~
+               at (23,02), "(2)First Screen",                            ~
+               at (24,02), fac(hex(8c)), pf5$                   , ch(16),~
+               at (23,65),                                               ~
+                  "(15)Print Screen",                                    ~
+               at (22,20), fac(hex(8c)), pf8$                   , ch(30),~
+               at (23,20), fac(hex(8c)), pf10$                  , ch(19),~
+               at (24,20), "(14)View Pending Purchases",                 ~
+               at (24,65), "(16)Return",                                 ~
+                                                                         ~
+               keys(hex(000205080d0e0f10) & pf10k$),                     ~
+               key (keyhit%)
+
+               if keyhit% <> 13% then L41300
+                  call "MANUAL" ("VPRPSLCT")
+                  goto L40100
+
+L41300:        if keyhit% <> 15% then L41340
+                  call "PRNTSCRN"
+                  goto L40100
+
+L41340:        if keyhit% <> 10% then L41500 /* Part/Description toggle */
+                    if p% <> 0% then goto L41400
+                        p% = 1%
+                        str(header$,40%, 4%) = "UOM "
+                        if mc_on$ <> "Y" then L40100
+                            str(header$,46%, 4%) = "Stat"
+                            str(toggle2$())  = str(meas$())
+                            str(venprice$()) = str(price_stat$())
+                            str(veneach$())  = str(veneach_stat$())
+                            goto L40100
+
+L41400:             p% = 0%
+                    if mc_on$ <> "Y" then L40100
+                        str(header$,40%, 4%) = "Curr"
+                        str(header$,46%, 4%) = "Curr"
+                        str(toggle2$())  = str(curr$())
+                        str(venprice$()) = str(price_curr$())
+                        str(veneach$())  = str(veneach_curr$())
+                        goto L40100
+
+L41500:        close ws
+               call "SCREEN" addr ("C", f1%, "I", i$(), cursor%())
+               return
+

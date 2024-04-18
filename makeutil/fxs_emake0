@@ -1,0 +1,31 @@
+#	b_cgen makefile  (shared_make)
+# makefile for 'c' generation, COMPILE and Linkage of Fix Source Programs!
+#
+# Same a Source except for target
+#
+
+# Set up the variables
+include ../optcode
+CFLAGS=-Ae $(OPTCODE) -D_HPUX_SOURCE
+LD=ld
+#LDFLAGS= +s -a archive_shared +b :
+LDFLAGS= +s +b :
+
+
+# Location for the stored objects to be shipped.
+OBJ=./
+
+# Extra object files for routines that MUST be explicitly loaded
+EXT_OBJ=../load2/cuserid.o /opt/langtools/lib/crt0.o
+
+# b_cgen, wisp & disam load modules
+
+CMS_LIB=-lasm -lscrn -lfile -lmat -lwb -lutil -lcmath -lutil -lasm -ldisam \
+-ldewisp
+
+# System libraries
+M_LIB=-lcurses -lm -lc -ldld
+
+# CMS Subroutine load libraries
+
+CMSSUB_LIBX= \

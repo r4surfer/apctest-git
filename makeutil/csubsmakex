@@ -1,0 +1,13 @@
+#	b_cgen Subroutine makefile
+# This makefile is for CUSTOM or Prerelease SUBSources exclusively
+# Concatenates individual rules section (csubsmake2) for each unit
+#
+# Use for custom subroutines / variable target libraries
+
+#rule
+.DEFAULT:
+	@echo "\n"$@":" >> ./tmpmake2
+	cat ./csubsmake2  >> ./tmpmake2
+
+# Other Make Directives
+all: 	\

@@ -1,0 +1,7 @@
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+# List of files & rules for each file
+
+all:	target	\

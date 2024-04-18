@@ -1,0 +1,174 @@
+        REM THISPROGRAMWASGENERATEDUSINGTHEGENPGMPROGRAMWHICHISAPROPRIETR~
+            *                                                           *~
+            *   AAA   RRRR   IIIII  PPPP   RRRR   IIIII  N   N  TTTTT   *~
+            *  A   A  R   R    I    P   P  R   R    I    NN  N    T     *~
+            *  AAAAA  RRRR     I    PPPP   RRRR     I    N N N    T     *~
+            *  A   A  R   R    I    P      R   R    I    N  NN    T     *~
+            *  A   A  R   R  IIIII  P      R   R  IIIII  N   N    T     *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * ARIPRINT - PASSES DATA TO THE SUBROUTINE 'ARIPRSUB',      *~
+            *            WHICH THEN PRINTS CUSTOMER INVOICES.           *~
+            *            DATA SELECTED ARE ALL RECORDS IN 'ARIINVRF'    *~
+            *            FOR THE CURRENT USER. DATA PASSED ARE THE      *~
+            *            RELATED CUSTOMER CODE AND INVOICE NUMBER.      *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 10/14/86 ! Original                                 ! JIM *~
+            * 04/06/93 ! PRR 12404. No longer relies on record cnt! JDH *~
+            PRODUCTOFCAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVED**
+
+        REM *************************************************************~
+            *THIS PROGRAM CALLS THE SUBROUTINE 'ARIPRSUB' - PRINT CUS-  *~
+            *TOMER INVOICES.                                            *~
+            *************************************************************
+
+        dim                                                              ~
+            cust_code$9,                 /* Customer code from ARIINVRF*/~
+            hdr$40,                      /* ASKUSER constant           */~
+            invoice$8,                   /* Invoice # from ARIINVRF    */~
+            msg$(3)79,                   /* ASKUSER messages           */~
+            plowkey$20,                  /* Current user/ARIINVRF key  */~
+            rptid$6,                     /* Report ID                  */~
+            userid$3                     /* Current user               */
+
+        dim f2%(32),                     /* = 0 if the file is open    */~
+            f1%(32),                     /* = 1 if READ was successful */~
+            fs%(32),                     /* = 1 if file open, -1 if it */~
+                                         /*   doesn't exist, or 0 if   */~
+                                         /*   not yet checked (OPENCHCK*/~
+            rslt$(32)20                  /* Text from file opening     */
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R6.03.00 03/02/94 General Release  Purchase Jobs  "
+        REM *************************************************************
+
+            mat f2% = con : mat f1% = zer
+
+                     /* The variable F2%() should not be modified.     */
+                     /* FS%() also should not be modified (see         */
+                     /* OPENCHCK).                                     */
+
+        REM *************************************************************~
+            *                  S E L E C T   F I L E S                  *~
+            *                                                           *~
+            *-----+----------+------------------------------------------*~
+            *FILE#!  PRNAME  ! D E S C R I P T I O N                    *~
+            *-----+----------+------------------------------------------*~
+            * #3  ! ARIINVRF ! A/R Invoice Repost file                  *~
+            *************************************************************~
+            *       File Selection and Open Calls                       *~
+            *************************************************************
+
+            select #3,  "ARIINVRF",                                      ~
+                        varc,     indexed,  recsize =   20,              ~
+                        keypos =    1, keylen =  20
+
+            call "SHOSTAT" ("Opening Files, One Moment Please")
+
+            call "OPENCHCK" (#3,  fs%(3 ), f2%(3 ), 0%, rslt$(3 ))
+
+        REM *************************************************************~
+            *                I N I T I A L I Z A T I O N                *~
+            *-----------------------------------------------------------*~
+            * Initializes information necessary for program.            *~
+            *************************************************************
+
+            comp% = 0% : first_time% = 1%
+            call "EXTRACT" addr("ID", userid$)
+            plowkey$ = userid$
+            str(plowkey$,4) = all(hex(00))
+            goto L10000  /* Bypass OPEN_PRINTER for now */
+
+        open_printer
+            if comp% > 0% then L09240
+L09140:         comp% = 0%
+                hdr$ = "*** CANCEL REQUEST ***"
+                msg$(1) = "There is no Invoice data to print"
+                msg$(3) = "Press RETURN to cancel program"
+                call "ASKUSER" (comp%, hdr$, msg$(1), msg$(2), msg$(3))
+                if comp% <> 0% then L09140
+                goto exit_program /* NOTHING TO DO; DON'T DO ANYTHING */
+L09240:     dup%, prt%, abend% = 0%
+            rptid$ = "ARI006"
+            select printer
+            return
+
+L10000: REM *************************************************************~
+            *           M A I N   P R O G R A M   L O O P               *~
+            *************************************************************
+
+        main_program_loop
+            call "PLOWNEXT" (#3, plowkey$, 3%, f1%(3))
+            if f1%(3%) = 1% then comp% = 1% /* There was at least 1 rec */
+            if first_time% = 1% then gosub open_printer
+            first_time% = 0%
+            if f1%(3%) = 0% then goto end_of_job
+            get #3 using L10100, cust_code$, invoice$
+
+        REM RECORD LAYOUT FOR FILE 'ARIINVRF' ***************************
+L10100:         FMT  XX(3),              /* User ID                    */~
+                     CH(9),              /* Customer code              */~
+                     CH(8)               /* Invoice number             */
+
+            call "ARIPRSUB" (dup%, prt%, abend%, cust_code$, invoice$,   ~
+                rptid$)
+            if abend% <> 0% then goto abend_program  /* Did it abort? */
+            goto main_program_loop                   /* No- continue */
+
+        end_of_job
+            if prt% <> 0% then goto L10280 /* Print anything? */
+L10210:         comp% = 0%                /* No- so inform the user */
+                hdr$ = "*** NULL SET OF INVOICES ***"
+                msg$(1) = "There were no Invoices to be printed for " &  ~
+                     "user " & userid$
+                msg$(3) = "Press RETURN to continue"
+                call "ASKUSER" (comp%, hdr$, msg$(1), msg$(2), msg$(3))
+                if comp% <> 0% then goto L10210
+L10280:     plowkey$ = userid$ /*Delete current user's invoice records*/
+            str(plowkey$,4) = all(hex(00))
+            call "DELETE" (#3, plowkey$, 3%)
+        abend_program
+            close printer
+            call "SETPRNT" (rptid$, " ", 0%, 1%)
+            goto exit_program
+
+        REM *************************************************************~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *************************************************************
+
+        REM THISPROGRAMWASGENERATEDBYGENPGMAPROPRIETRYPRODUCTOFCAELUSASSO~
+            *                          E X I T                          *~
+            *-----------------------------------------------------------*~
+            * Terminates execution (files closed automatically).        *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC
+
+        exit_program
+            call "SHOSTAT" ("One Moment Please")
+            end

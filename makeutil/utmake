@@ -1,0 +1,38 @@
+#	b_cgen makefile
+# makefile for 'c' generation, COMPILE and Linkage of Source Programs!
+#  Exclusive for programs in 'c' Utility Source
+
+# Define target
+OBJ=../utility
+
+# Set up the variables
+LD=ld
+#LDFLAGS= +s -a archive_shared +b :
+LDFLAGS= +s +b :
+
+# Extra object files for routines that MUST be explicitly loaded
+EXT_OBJ=../load2/cuserid.o /opt/langtools/lib/crt0.o
+
+# b_cgen, wisp & disam load modules
+
+CMS_LIB= -lasm -lscrn -lfile -lmat -lwb -lutil -lcmath -lutil -lasm \
+	 -ldisam -ldewisp
+
+# System libraries
+M_LIB=-lcurses -lm -lc
+
+# Define the Combined Parameters
+
+CMSPATH= \
+LD_DIRS=-L$(CMSPATH)/load2
+LD_LIBS=$(CMS_LIB) $(M_LIB)
+
+.SUFFIXES:
+.SUFFIXES:      .a .o .c .bas
+
+# Define the steps from .o to executable
+.o:
+        @echo  == Using .o to executable rule  ==
+        $(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+
+all:    target  \

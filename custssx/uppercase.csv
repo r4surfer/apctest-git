@@ -1,0 +1,109 @@
+/*
+ uppercase: Wed Mar 29 08:10:38 2006
+ */
+
+#include <ctype.h>               /* CMG */
+#include <stdio.h>               /* CMG */ 
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+UPPERCASE (INSTRING_TS, ERR_IS)
+struct symbol *INSTRING_TS;
+struct symbol *ERR_IS;
+{
+
+#include "uppercase.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 2) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM **************************************************************~*/ 
+/* 000002            * subroutine to check string and convert to uppercase        *~*/ 
+/* 000003            *------------------------------------------------------------*~*/ 
+/* 000004            * 03/01/06 ! original                                  - CMG *~*/ 
+/* 000005            ***************************************************************/ 
+/* 000006*/ 
+/* 000007        sub "UPPERCASE" (instring$,      :: String to Check for lowerca::~*/ 
+/* 000010                       err% )            :: error                      ::*/ 
+/* 000011*/ 
+/* 000012*/ 
+/* 000013*/ 
+/* 000014        dim                              :: Variables                  ::~*/ 
+/* 000015            instring$256,                :: Input string               ::~*/ 
+/* 000016            outstring$256                :: Output string              ::*/ 
+/* 000017*/ 
+/* 000018*/ 
+/* 000019            err% = 99%*/ 
+	*(ERR_is) =  99;
+/* 000020*/ 
+
+
+
+        char *ptr;
+        char *inputstring;
+        int counter = 0;
+        
+        inputstring=INSTRING_TS->p;
+
+
+        for (ptr = inputstring; counter <= INSTRING_TS->len; ++ptr)
+        {
+
+             *ptr = toupper(*ptr);
+             counter++;
+        }
+
+        *(ERR_is) =  0;
+/* 000022*/ 
+/* 000023*/ 
+/* 000024*/ 
+/* 000025            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF uppercase */
+

@@ -1,0 +1,153 @@
+        REM THISPROGRAMWASGENERATEDUSINGTHEGENPGMPROGRAMWHICHISAPROPRIETR~
+            *                                                           *~
+            *  BBBB    CCC   K   K  N   N  EEEEE  X   X  TTTTT          *~
+            *  B   B  C   C  K  K   NN  N  E       X X     T            *~
+            *  BBBB   C      KKK    N N N  EEEE     X      T            *~
+            *  B   B  C   C  K  K   N  NN  E       X X     T            *~
+            *  BBBB    CCC   K   K  N   N  EEEEE  X   X    T            *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * BCKNEXT  - Derives Next Sales Order Number.               *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 07/14/86 ! Original                                 ! ERN *~
+            * 01/15/88 ! Added check to SO History File too       ! JDH *~
+            * 10/05/88 ! Added check to DEMMASTR File too         ! JDH *~
+            PRODUCTOFCAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVED**
+
+        sub "BCKNEXT"    (#1,            /* STORNAME Channel           */~
+                          #2,            /* BCKLINES Channel           */~
+                          #3,            /* BCKBUF2  Channel           */~
+                          #4,            /* BCKHLNES Channel           */~
+                          #5,            /* DEMMASTR Channel           */~
+                          str$,          /* Store Number               */~
+                          so$)           /* Sales Order Number         */
+
+        dim                                                              ~
+            nextso$8,                    /* Next Sales Order Number    */~
+            readkey$50,                  /* A Read Key                 */~
+            so$16,                       /* Sales Order Number         */~
+            soassign$3,                  /* SO Assignment Flag         */~
+            str$3,                       /* Store Number on Order      */~
+            temp$8                       /* Temporary Variable         */
+
+        dim f1%(12)                      /* = 1 if READ was successful */
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R6.00.00 01/19/90 CMS2 / CMS-I Merge              "
+        REM *************************************************************
+
+
+        REM *************************************************************~
+            *                  S E L E C T   F I L E S                  *~
+            *                                                           *~
+            *-----+----------+------------------------------------------*~
+            *FILE#!  PRNAME  ! D E S C R I P T I O N                    *~
+            *-----+----------+------------------------------------------*~
+            * #1  ! STORNAME ! Store Master File                        *~
+            * #2  ! BCKLINES ! Sales Order Master- Line Items           *~
+            * #3  ! BCKBUF2  ! Sales Order Buffer- Line Items           *~
+            * #4  ! BCKHLNES ! Sales Order History Line Detail          *~
+            * #5  ! DEMMASTR ! Demand Master File                       *~
+            *************************************************************~
+
+        REM *************************************************************~
+            *                I N I T I A L I Z A T I O N                *~
+            *-----------------------------------------------------------*~
+            * Initializes information necessary for program.            *~
+            *************************************************************
+
+            so$ = " "
+
+            if soassign$ <> " " then L09110
+                call "BCKSWTCH" ("BCK", "SOASSIGN", soassign$, r, temp%)
+L09110:     if soassign$ = "m" then end else r = r
+
+
+        REM *************************************************************~
+            *                 M A I N   L O G I C                       *~
+            *-----------------------------------------------------------*~
+            * Do what we are supposed to do.                            *~
+            *************************************************************
+
+*        Get the next number from the appropriate store.
+            if soassign$ = "s" then readkey$ = str$ else                 ~
+                                    readkey$ = soassign$
+            call "READ101" (#1, readkey$, f1%(1))
+            if f1%(1) = 0% then end
+
+            get #1 using L10130, nextso$
+L10130:         FMT POS(186), CH(8)
+
+L10150:     so$ = nextso$
+            if soassign$ = "s" then so$ = str$ & nextso$
+
+
+*        Check that number is not already used
+            readkey$ = str(so$) & hex(00)          /* BCKLINES */
+                call "PLOWNEXT" (#2, readkey$, 16%, f1%(2))
+                if f1%(2) = 1% then dupe_loop
+            readkey$ = str(so$) & hex(00)          /* BCKHLNES */
+                call "PLOWNEXT" (#4, readkey$, 16%, f1%(4))
+                if f1%(4) = 1% then dupe_loop
+            readkey$ = str(so$) & hex(00)          /* BCKBUF2  */
+                call "PLOWNEXT" (#3, readkey$, 16%, f1%(3))
+                if f1%(3) = 1% then dupe_loop
+            readkey$ = str(so$) & hex(00)          /* DEMMASTR */
+                call "PLOWALTS" (#5, readkey$, 1%, 16%, f1%(5))
+                if f1%(5) = 1% then dupe_loop
+
+*        All Ok- Update next number and get out
+            gosub up_it_by_one
+            put #1 using L10130, nextso$
+            rewrite #1
+            end
+
+
+        dupe_loop    /* Next number already used, get next next        */
+            gosub up_it_by_one
+            goto  L10150
+
+
+        up_it_by_one  /* Derive next number */
+            for p% = 3% to 1% step -1%
+                if str(nextso$,p%,1) < "0" or str(nextso$,p%,1) > "9"    ~
+                           then L10470
+            next p%
+            p% = 0%  /* No Prefix        */
+L10470:     convert str(nextso$,p%+1%) to temp%
+            temp% = temp% + 1%
+            if temp% >= 10**(8-p%) then temp% = 1%
+            convert temp% to temp$, pic(00000000)
+            if p% <> 0% then str(temp$,,p%) = str(nextso$,,p%)
+            nextso$ = temp$
+            return
+
+
+        REM THISPROGRAMWASGENERATEDBYGENPGMAPROPRIETRYPRODUCTOFCAELUSASSO~
+            *                          E X I T                          *~
+            *-----------------------------------------------------------*~
+            * Terminates execution (files closed automatically).        *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1986  AN UNPUBLISHED WORK BY CAELUS ASSO-   *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC
+
+            end

@@ -1,0 +1,558 @@
+#	makefile to do a global re-gen and compile of all source units
+#    
+#	Note restart section - to be used if a restart is needed
+#		1) copy list from 'all' section
+#		   position cursor at line below 'all'
+#		   y14<return>
+#                  position cursor at 'restart'
+#		   p
+#		2) remove components not required in restart
+#		3) save
+#		4) 'make restart'
+#
+#	Also has the ability to make individual units via listing them:
+#		make source2 subsrce3 custsrc
+#
+
+EFILE = errfile
+
+
+all: mecho \
+	subsrcr2	subsrcr3	utilsrce	cutilsrce  \
+	hexedsrc						   \
+	subsrce3	subsrce2				   \
+	presr3		presr2		press3		press2     \
+	pressx							   \
+	custsr3		custsr2		custss3		custss2    \
+	custssx							   \
+	presubs		custsubs				   \
+	subobj_o						   \
+	subsrcr3_o	subsrcr2_o	subsrce3_o	subsrce2_o \
+	pressx_o	custssx_o				   \
+	cutilsrce_o	utilsrce_o	fixes			   \
+	sourceac	sourcecd	sourcecm	sourceec   \
+	sourceeq	sourcefa	sourcefi	sourcemc   \
+	sourcepc	sourcepp	sourcewa	           \
+	source2							   \
+	presrcx         custsrcx	presrce		custsrce
+
+restart: mecho  \
+	subsrcr2	subsrcr3	utilsrce	cutilsrce  \
+	hexedsrc						   \
+	subsrce3	subsrce2				   \
+	presr3		presr2		press3		press2     \
+	pressx							   \
+	custsr3		custsr2		custss3		custss2    \
+	custssx							   \
+	presubs		custsubs				   \
+	subobj_o						   \
+	subsrcr3_o	subsrcr2_o	subsrce3_o	subsrce2_o \
+	pressx_o	custssx_o				   \
+	cutilsrce_o	utilsrce_o	fixes			   \
+	sourcecd	sourcecm	sourcemc	sourcewa   \
+	source2							   \
+	presrcx         custsrcx	presrce		custsrce
+
+to_load1: mecho  \
+	subsrcr2	subsrcr3				   \
+	subsrce3	subsrce2				   \
+	presr3		presr2		press3		press2     \
+	pressx							   \
+	custsr3		custsr2		custss3		custss2    \
+	custssx							   \
+	presubs		custsubs				   \
+	subobj_o						   \
+	subsrcr3_o	subsrcr2_o	subsrce3_o	subsrce2_o \
+	pressx_o	custssx_o
+
+internal: mecho \
+	subsrcr2	subsrcr3	utilsrce	cutilsrce  \
+	hexedsrc
+
+qc : mecho \
+	custsubs	presubs		custsrce	presrce
+
+mecho:
+	rm -f ./$(EFILE)
+	echo `date` >> ./$(EFILE)
+
+subsrcr2: force_it
+	if ( test -d ./subsrcr2 ) then			\
+		(cd ./makeutil;				\
+		make subsrcr2; cd ..;			\
+		cd ./subsrcr2;				\
+		make 2> ./sr2err; cd ..;		\
+		echo "subsrcr2:" >> ./$(EFILE);		\
+		cat ./subsrcr2/sr2err >> ./$(EFILE))	\
+	else	echo "subsrcr2 Not Found" >> ./$(EFILE);\
+	fi
+
+subsrcr3: force_it
+	if ( test -d ./subsrcr3 ) then 			\
+		(cd ./makeutil;				\
+		make subsrcr3; cd ..;			\
+		cd ./subsrcr3;				\
+		make 2> ./sr3err; cd ..;		\
+		echo "subsrcr3:" >> ./$(EFILE);		\
+		cat ./subsrcr3/sr3err >> ./$(EFILE))	\
+	else	echo "subsrcr3 Not Found" >> ./$(EFILE);\
+	fi
+
+utilsrce: force_it
+	if ( test -d ./utilsrce ) then 			\
+		(cd ./makeutil;				\
+		make utilsrce; cd ..;			\
+		cd ./utilsrce;				\
+		make -k 2> ./utilerr; cd ..;		\
+		echo "utilsrce:" >> ./$(EFILE);		\
+		cat ./utilsrce/utilerr >> ./$(EFILE))	\
+	else	echo "utilsrce Not Found" >> ./$(EFILE);\
+	fi
+
+cutilsrce: force_it
+	if ( test -d ./cutilsrce ) then 		\
+		(cd ./makeutil;				\
+		make cutilsrce; cd ..;			\
+		cd ./cutilsrce;				\
+		make -k 2> ./cutilerr; cd ..;		\
+		echo "cutilsrce:" >> ./$(EFILE); 	\
+		cat ./cutilsrce/cutilerr >> ./$(EFILE))	\
+	else	echo "cutilsrce Not Found" >>./$(EFILE);\
+	fi
+
+hexedsrc: force_it
+	if ( test -d ./hexedsrc ) then 			\
+		(cd ./hexedsrc;				\
+		make hexed_o -k 2> ./hexederr; cd ..;	\
+		echo "hexedsrc:" >> ./$(EFILE); 	\
+		cat ./hexedsrc/hexederr >> ./$(EFILE))	\
+	else	echo "hexedsrc Not Found" >> ./$(EFILE);\
+	fi
+
+subsrce3: force_it
+	(cd ./makeutil;					\
+		make subsrce3; cd ..;			\
+		cd ./subsrce3;	 			\
+		make 2> ./ss3err; cd ..;		\
+		echo "subsrce3:" >> ./$(EFILE);		\
+		cat ./subsrce3/ss3err >> ./$(EFILE))
+
+subsrce2: force_it
+	(cd ./makeutil;					\
+		make subsrce2; cd ..;			\
+		cd ./subsrce2; 				\
+		make 2> ./ss2err; cd ..;		\
+		echo "subsrce2:" >> ./$(EFILE);		\
+		cat ./subsrce2/ss2err >> ./$(EFILE))
+
+presr3: force_it
+	if ( test -d ./presr3 ) then 			\
+		(cd ./makeutil;				\
+		make presr3; cd ..;			\
+		cd ./presr3;				\
+		make 2> ./sr3err; cd ..;		\
+		echo "presr3:" >> ./$(EFILE);		\
+		cat ./presr3/sr3err >> ./$(EFILE))	\
+	fi
+
+presr2: force_it
+	if ( test -d ./presr2 ) then 			\
+		(cd ./makeutil;				\
+		make presr2; cd ..;			\
+		cd ./presr2;				\
+		make 2> ./sr2err; cd ..;		\
+		echo "presr2:" >> ./$(EFILE);		\
+		cat ./presr2/sr2err >> ./$(EFILE))	\
+	fi
+
+press3: force_it
+	if ( test -d ./press3 ) then 			\
+		(cd ./makeutil;				\
+		make press3; cd ..;			\
+		cd ./press3;				\
+		make 2> ./ss3err; cd ..;		\
+		echo "press3:" >> ./$(EFILE);		\
+		cat ./press3/ss3err >> ./$(EFILE))	\
+	fi
+
+press2: force_it
+	if ( test -d ./press2 ) then 			\
+		(cd ./makeutil;				\
+		make press2; cd ..;			\
+		cd ./press2;				\
+		make 2> ./ss2err; cd ..;		\
+		echo "press2:" >> ./$(EFILE);		\
+		cat ./press2/ss2err >> ./$(EFILE))	\
+	fi
+
+pressx: force_it
+	if ( test -d ./pressx ) then 			\
+		(cd ./makeutil;				\
+		make pressx; cd ..;			\
+		cd ./pressx;				\
+		make 2> ./ssxerr; cd ..;		\
+		echo "pressx:" >> ./$(EFILE);		\
+		cat ./pressx/ssxerr >> ./$(EFILE))	\
+	fi
+
+custsr3: force_it
+	if ( test -d ./custsr3 ) then 			\
+		(cd ./makeutil;				\
+		make custsr3; cd ..;			\
+		cd ./custsr3;				\
+		make 2> ./sr3err; cd ..;		\
+		echo "custsr3:" >> ./$(EFILE);		\
+		cat ./custsr3/sr3err >> ./$(EFILE))	\
+	fi
+
+custsr2: force_it
+	if ( test -d ./custsr2 ) then 			\
+		(cd ./makeutil;				\
+		make custsr2; cd ..;			\
+		cd ./custsr2;				\
+		make 2> ./sr2err; cd ..;		\
+		echo "custsr2:" >> ./$(EFILE);		\
+		cat ./custsr2/sr2err >> ./$(EFILE))	\
+	fi
+
+custss3: force_it
+	if ( test -d ./custss3 ) then 			\
+		(cd ./makeutil;				\
+		make custss3; cd ..;			\
+		cd ./custss3;				\
+		make 2> ./ss3err; cd ..;		\
+		echo "custss3:" >> ./$(EFILE);		\
+		cat ./custss3/ss3err >> ./$(EFILE))	\
+	fi
+
+custss2: force_it
+	if ( test -d ./custss2 ) then 			\
+		(cd ./makeutil;				\
+		make custss2; cd ..;			\
+		cd ./custss2;				\
+		make 2> ./ss2err; cd ..;		\
+		echo "custss2:" >> ./$(EFILE);		\
+		cat ./custss2/ss2err >> ./$(EFILE))	\
+	fi
+
+custssx: force_it
+	if ( test -d ./custssx ) then 			\
+		(cd ./makeutil;				\
+		make custssx; cd ..;			\
+		cd ./custssx;				\
+		make 2> ./ssxerr; cd ..;		\
+		echo "custssx:" >> ./$(EFILE);		\
+		cat ./custssx/ssxerr >> ./$(EFILE))	\
+	fi
+
+presubs: force_it
+	if ( test -d ./presubs ) then 			\
+		(cd ./makeutil;				\
+		make presubs; cd ..;			\
+		cd ./presubs;				\
+		make; cd ..;				\
+		echo "presubs:" >> ./$(EFILE))		\
+	else	echo "presubs Not Found" >> ./$(EFILE);	\
+	fi
+
+custsubs: force_it
+	if ( test -d ./custsubs ) then 			\
+		(cd ./makeutil;				\
+		make custsubs; cd ..;			\
+		cd ./custsubs; 				\
+		make; cd ..;				\
+		echo "custsubs:" >> ./$(EFILE))		\
+	else	echo "custsubs Not Found" >> ./$(EFILE);\
+	fi
+
+subobj_o: force_it2
+	if ( test -d ./subobj_o ) then			\
+		(cd ./makeutil;				\
+		make subobj_o; cd ..;			\
+		cd ./subobj_o; make; cd ..;		\
+		echo "subobj_o" >> ./$(EFILE))		\
+	else	echo "subobj_o Not Found" >> ./$(EFILE);\
+	fi
+
+subsrcr2_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no subsrcr2_o" >> ./$(EFILE);	\
+	else							\
+		(cd ./makeutil;					\
+		make subsrcr2_o; cd ..;				\
+		cd ./subsrcr2_o;				\
+		make; cd ..;					\
+		echo "subsrcr2_o:" >> ./$(EFILE);		\
+		cat ./subsrcr2_o/*sr2err >> ./$(EFILE))		\
+	fi
+
+subsrcr3_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no subsrcr3_o" >>./$(EFILE);	\
+	else							\
+		(cd ./makeutil;					\
+		make subsrcr3_o; cd ..;				\
+		cd ./subsrcr3_o;				\
+		make; cd ..;					\
+		echo "subsrcr3_o:" >> ./$(EFILE);		\
+		cat ./subsrcr3_o/*sr3err >> ./$(EFILE))		\
+	fi
+
+subsrce3_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no subsrce3_o" >> ./$(EFILE);	\
+	else							\
+		(cd ./makeutil;					\
+		make subsrce3_o; cd ..;				\
+		cd ./subsrce3_o; 				\
+		make; cd ..;					\
+		echo "subsrce3_o:" >> ./$(EFILE); 		\
+		cat ./subsrce3_o/*ss3err >> ./$(EFILE))		\
+	fi
+
+subsrce2_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no subsrce2_o" >> ./$(EFILE);	\
+	else							\
+		(cd ./makeutil;					\
+		make subsrce2_o; cd ..;				\
+		cd ./subsrce2_o; 				\
+		make; cd ..;					\
+		echo "subsrce2_o:" >> ./$(EFILE); 		\
+		cat ./subsrce2_o/*ss2err >> ./$(EFILE))		\
+	fi
+
+pressx_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no pressx_o" >> ./$(EFILE);	\
+	else							\
+	if ( test -d ./pressx_o ) then				\
+	if ( test -f ./pressx_o/*.o) then			\
+		(cd ./makeutil;					\
+		make pressx_o; cd ..;				\
+		cd ./pressx_o; 					\
+		make -k 2> ./pssxerr; cd ..;			\
+		echo "pressx_o:" >> ./$(EFILE); 		\
+		cat ./pressx_o/pssxerr >> ./$(EFILE))		\
+	fi; fi ; fi
+
+custssx_o: force_it2
+	if ( test -d ./subobj_o ) then				\
+		echo "subobj_o, no custssx_o" >> ./$(EFILE);	\
+	else							\
+	if ( test -d ./custssx_o ) then				\
+	if ( test -f ./custssx_o/*.o) then			\
+		(cd ./makeutil;					\
+		make custssx_o; cd ..;				\
+		cd ./custssx_o; 				\
+		make -k 2> ./cssxerr; cd ..;			\
+		echo "custssx_o:" >> ./$(EFILE); 		\
+		cat ./custssx_o/cssxerr >> ./$(EFILE))		\
+	fi; fi ; fi
+
+cutilsrce_o: mpath
+	(cd ./makeutil;					\
+		make cutilsrce_o; cd ..;		\
+		cd ./cutilsrce_o;			\
+		make -k 2> ./cutilerr; cd ..;		\
+		echo "cutilsrce_o:" >> ./$(EFILE); 	\
+		cat ./cutilsrce_o/cutilerr >> ./$(EFILE))
+
+utilsrce_o: mpath
+	(cd ./makeutil;					\
+		make utilsrce_o; cd ..;			\
+		cd ./utilsrce_o;			\
+		make -k 2> ./utilerr; cd ..;		\
+		echo "utilsrce_o:" >> ./$(EFILE); 	\
+		cat ./utilsrce_o/utilerr >> ./$(EFILE))
+
+sourceac: mpath
+	if ( test -d ./sourceac ) then			\
+		(cd ./makeutil;				\
+		make sourceac; cd ..;			\
+		cd ./sourceac;				\
+		make -k 2> ./acerr; cd ..;		\
+		echo "sourceac" >> ./$(EFILE);		\
+		cat ./sourceac/acerr >> ./$(EFILE))	\
+	else	echo "sourceac Not Found" >> ./$(EFILE);\
+	fi
+
+sourcecd: mpath
+	if ( test -d ./sourcecd ) then			\
+		(cd ./makeutil;				\
+		make sourcecd; cd ..;			\
+		cd ./sourcecd;				\
+		make -k 2> ./cderr; cd ..;		\
+		echo "sourcecd" >> ./$(EFILE);		\
+		cat ./sourcecd/cderr >> ./$(EFILE))	\
+	else	echo "sourcecd Not Found" >> ./$(EFILE);\
+	fi
+
+sourcecm: mpath
+	if ( test -d ./sourcecm ) then			\
+		(cd ./makeutil;				\
+		make sourcecm; cd ..;			\
+		cd ./sourcecm;				\
+		make -k 2> ./cmerr; cd ..;		\
+		echo "sourcecm" >> ./$(EFILE);		\
+		cat ./sourcecm/cmerr >> ./$(EFILE))	\
+	else	echo "sourcecm Not Found" >> ./$(EFILE);\
+	fi
+
+sourceec: mpath
+	if ( test -d ./sourceec ) then	 		\
+		(cd ./makeutil;				\
+		make sourceec; cd ..;			\
+		cd ./sourceec;				\
+		make -k 2> ./ecerr; cd ..;		\
+		echo "sourceec" >> ./$(EFILE); 		\
+		cat ./sourceec/ecerr >> ./$(EFILE))	\
+	else	echo "sourceec Not Found" >> ./$(EFILE);\
+	fi
+
+sourceeq: mpath
+	if ( test -d ./sourceeq ) then	 		\
+		(cd ./makeutil;				\
+		make sourceeq; cd ..;			\
+		cd ./sourceeq;				\
+		make -k 2> ./eqerr; cd ..;		\
+		echo "sourceeq" >> ./$(EFILE); 		\
+		cat ./sourceeq/eqerr >> ./$(EFILE))	\
+	else	echo "sourceeq Not Found" >> ./$(EFILE);\
+	fi
+
+sourcefa: mpath
+	if ( test -d ./sourcefa ) then	 		\
+		(cd ./makeutil;				\
+		make sourcefa; cd ..;			\
+		cd ./sourcefa;				\
+		make -k 2> ./faerr; cd ..;		\
+		echo "sourcefa" >> ./$(EFILE); 		\
+		cat ./sourcefa/faerr >> ./$(EFILE))	\
+	else	echo "sourcefa Not Found" >> ./$(EFILE);\
+	fi
+
+sourcefi: mpath
+	if ( test -d ./sourcefi ) then	 		\
+		(cd ./makeutil;				\
+		make sourcefi; cd ..;			\
+		cd ./sourcefi;				\
+		make -k 2> ./fierr; cd ..;		\
+		echo "sourcefi" >> ./$(EFILE); 		\
+		cat ./sourcefi/fierr >> ./$(EFILE))	\
+	else	echo "sourcefi Not Found" >> ./$(EFILE);\
+	fi
+
+sourcemc: mpath
+	if ( test -d ./sourcemc ) then	 		\
+		(cd ./makeutil;				\
+		make sourcemc; cd ..;			\
+		cd ./sourcemc;				\
+		make -k 2> ./mcerr; cd ..;		\
+		echo "sourcemc" >> ./$(EFILE); 		\
+		cat ./sourcemc/mcerr >> ./$(EFILE))	\
+	else	echo "sourcemc Not Found" >> ./$(EFILE);\
+	fi
+
+sourcepc: mpath
+	if ( test -d ./sourcepc ) then 			\
+		(cd ./makeutil;				\
+		make sourcepc; cd ..;			\
+		cd ./sourcepc;				\
+		make -k 2> ./pcerr; cd ..;		\
+		echo "sourcepc" >> ./$(EFILE);		\
+		cat ./sourcepc/pcerr >> ./$(EFILE))	\
+	else	echo "sourcepc Not Found" >> ./$(EFILE);\
+	fi
+
+sourcepp: mpath
+	if ( test -d ./sourcepp ) then 			\
+		(cd ./makeutil;				\
+		make sourcepp; cd ..;			\
+		cd ./sourcepp;				\
+		make -k 2> ./pperr; cd ..;		\
+		echo "sourcepp" >> ./$(EFILE);		\
+		cat ./sourcepp/pperr >> ./$(EFILE))	\
+	else	echo "sourcepp Not Found" >> ./$(EFILE);\
+	fi
+
+sourcewa: mpath
+	if ( test -d ./sourcewa ) then 			\
+		(cd ./makeutil;				\
+		make sourcewa; cd ..;			\
+		cd ./sourcewa;				\
+		make -k 2> ./waerr; cd ..;		\
+		echo "sourcewa" >> ./$(EFILE);		\
+		cat ./sourcewa/waerr >> ./$(EFILE))	\
+	else	echo "sourcewa Not Found" >> ./$(EFILE);\
+	fi
+
+source2: mpath
+	(cd ./makeutil;					\
+		make source2; cd ..;			\
+		cd ./source2;				\
+		make -k 2> ./srcerr; cd ..;		\
+		echo "source2" >> ./$(EFILE);		\
+		cat ./source2/srcerr >> ./$(EFILE))
+
+presrcx: mpath
+	if ( test -d ./presrcx ) then 			\
+		(cd ./makeutil;				\
+		make presrcx; cd ..;			\
+		cd ./presrcx;				\
+		make -k 2> ./psrcerr; cd ..;		\
+		echo "presrcx" >> ./$(EFILE);		\
+		cat ./presrcx/psrcerr >> ./$(EFILE))	\
+	fi
+
+custsrcx: mpath
+	if ( test -d ./custsrcx ) then 			\
+		(cd ./makeutil;				\
+		make custsrcx; cd ..;			\
+		cd ./custsrcx;				\
+		make -k 2> ./csrcerr; cd ..;		\
+		echo "custsrcx" >> ./$(EFILE);		\
+		cat ./custsrcx/csrcerr >> ./$(EFILE))	\
+	fi
+
+presrce: mpath
+	if ( test -d ./presrce ) then			\
+		(cd ./makeutil;				\
+		make presrce; cd ..;			\
+		cd ./presrce;				\
+		make -k 2> ./presrcerr; cd ..;		\
+		echo "presrce" >> ./$(EFILE); 		\
+		cat ./presrce/presrcerr >> ./$(EFILE))	\
+	else	echo "presrce Not Found" >> ./$(EFILE);	\
+	fi
+
+custsrce: mpath
+	if ( test -d ./custsrce ) then			\
+		(cd ./makeutil;				\
+		make custsrce; cd ..;			\
+		cd ./custsrce;				\
+		make -k 2> ./custsrcerr; cd ..;		\
+		echo "custsrce" >> ./$(EFILE);		\
+		cat ./custsrce/custsrcerr >> ./$(EFILE))\
+	else	echo "custsrce Not Found" >> ./$(EFILE);\
+	fi
+
+fixes: mpath
+	if ( test -d ./fixes ) then			\
+		(cd ./makeutil;				\
+		make fixes; cd ..;			\
+		cd ./fixes; 				\
+		make -k 2> ./fixeserr; cd ..;		\
+		echo "fixes" >> ./$(EFILE);		\
+		cat ./fixes/fixeserr >> ./$(EFILE))	\
+	else	echo "fixes Not Found" >> ./$(EFILE);	\
+	fi
+
+mpath:
+	rm -f ./makeutil/path.txt
+	pwd > ./makeutil/path.txt
+
+force_it:
+
+force_it2:
+

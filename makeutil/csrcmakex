@@ -1,0 +1,14 @@
+#	b_cgen Subroutine makefile
+# This makefile is for Custom Sources exclusively
+# Concatenates individual rules (csrcmake4) for each unit
+# onto library makefile
+#
+# Use for custom subroutines / variable target libraries
+
+#rule
+.DEFAULT:
+	@echo "\n"$@":" >> ./tmpmake4
+	cat ./csrcmake3  >> ./tmpmake4
+
+# Other Make Directives
+all: 	\

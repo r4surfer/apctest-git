@@ -1,0 +1,18 @@
+#	b_cgen Subroutine makefile
+# This makefile is for SUB Object exclusively
+# Creates single .sl or .a, containing all subs
+#
+
+# Define the Destination for the Archive or shared library
+OBJ=../load1
+
+# Define the Current Load Module
+LIBRARY = liballsubs
+
+# indirect path to actual object direcories
+A=../subsrcr2_o/
+B=../subsrcr3_o/
+C=../subsrce2_o/
+D=../subsrce3_o/
+P=../pressx_o/
+X=../custssx_o/

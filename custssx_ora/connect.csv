@@ -1,0 +1,209 @@
+/*
+ connect: Thu Apr  4 15:17:56 2002
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+/* GLOBALS - will convert to Caelus */
+sword status;
+
+OCIParam *mypard;
+ub4 counter;
+ub2 dtype;
+ub2 dsize;
+
+	/* Storage for 50 fields */
+ub2 field_len[255];
+text *field[255];
+text *field_name[255];
+
+OCIInd cmg[255];
+OCIEnv *envhp;
+OCIError *errhp;
+OCISvcCtx *svchp;
+OCIStmt   *stmthp;
+
+
+CONNECT (USER_TS, PASS_TS, SERVER_TS, ERR_IS)
+struct symbol *USER_TS;
+struct symbol *PASS_TS;
+struct symbol *SERVER_TS;
+struct symbol *ERR_IS;
+{
+
+#include "connect.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* pointer to strings */
+
+	text *USER_ts;
+	text *PASS_ts;
+	text *SERVER_ts;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 4) && (USER_TS != NULL))
+	{
+		USER_ts = (text *) *( (long *) USER_TS + 1);
+	}
+	if ((Call_args >= 4) && (PASS_TS != NULL))
+	{
+		PASS_ts = (text *) *( (long *) PASS_TS + 1);
+	}
+	if ((Call_args >= 4) && (SERVER_TS != NULL))
+	{
+		SERVER_ts = (text *) *( (long *) SERVER_TS + 1);
+	}
+	if ((Call_args >= 4) && (ERR_IS != NULL))
+	{
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+	}
+	
+		
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * CONNECT - Open a connection to the Oracle Database.       *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "CONNECT"  ( user$,          :: User Name to Connect  ::~*/ 
+/* 000021                              pass$,          :: Password to Connect   ::~*/ 
+/* 000022                              server$,        :: Connection String     ::~*/ 
+/* 000023                              err% )          :: 0% = OK               ::*/ 
+/* 000024*/ 
+/* 000025            dim server$25,                    :: Connection String     ::~*/ 
+/* 000026                user$25,                      :: User Name to Connect  ::~*/ 
+/* 000027                pass$25                       :: Password to Connect   ::*/ 
+/* 000028*/ 
+/* 000029            end*/ 
+
+  
+  OCIDescribe  *dschndl1 = (OCIDescribe *) 0,
+               *dschndl2 = (OCIDescribe *) 0,
+               *dschndl3 = (OCIDescribe *) 0;
+
+  OCISession *authp = (OCISession *) 0;
+  OCIServer *srvhp;
+
+
+  (void) OCIInitialize((ub4) OCI_DEFAULT, (dvoid *)0,
+                       (dvoid * (*)(dvoid *, size_t)) 0,
+                       (dvoid * (*)(dvoid *, dvoid *, size_t))0,
+                       (void (*)(dvoid *, dvoid *)) 0 );
+
+  (void) OCIEnvInit( (OCIEnv **) &envhp, OCI_DEFAULT, (size_t) 0,
+                     (dvoid **) 0 );
+
+  (void) OCIHandleAlloc( (dvoid *) envhp, (dvoid **) &errhp, OCI_HTYPE_ERROR,
+                   (size_t) 0, (dvoid **) 0);
+
+  /* server contexts */
+  (void) OCIHandleAlloc( (dvoid *) envhp, (dvoid **) &srvhp, OCI_HTYPE_SERVER,
+                   (size_t) 0, (dvoid **) 0);
+
+  (void) OCIHandleAlloc( (dvoid *) envhp, (dvoid **) &svchp, OCI_HTYPE_SVCCTX,
+                   (size_t) 0, (dvoid **) 0);
+
+  (void) OCIServerAttach( srvhp, errhp, (text *)"", strlen(""), 0);
+
+  /* set attribute server context in the service context */
+  (void) OCIAttrSet( (dvoid *) svchp, OCI_HTYPE_SVCCTX, (dvoid *)srvhp,
+                     (ub4) 0, OCI_ATTR_SERVER, (OCIError *) errhp);
+
+  (void) OCIHandleAlloc((dvoid *) envhp, (dvoid **)&authp,
+                        (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0);
+
+  (void) OCIAttrSet((dvoid *) authp, (ub4) OCI_HTYPE_SESSION,
+                 (dvoid *) USER_ts, (ub4) strlen((char *)USER_ts),
+                 (ub4) OCI_ATTR_USERNAME, errhp);
+
+  (void) OCIAttrSet((dvoid *) authp, (ub4) OCI_HTYPE_SESSION,
+                 (dvoid *) PASS_ts, (ub4) strlen((char *)PASS_ts),
+                 (ub4) OCI_ATTR_PASSWORD, errhp);
+
+  status= OCISessionBegin ( svchp,  errhp, authp, OCI_CRED_RDBMS,
+                          (ub4) OCI_DEFAULT);
+  if (status!=OCI_SUCCESS)
+  {
+		*ERR_is=status;
+		G_scnt = G_hold;	/* restore stack count */
+
+		return;
+  }
+
+  (void) OCIAttrSet((dvoid *) svchp, (ub4) OCI_HTYPE_SVCCTX,
+                   (dvoid *) authp, (ub4) 0,
+                   (ub4) OCI_ATTR_SESSION, errhp);
+
+  status=OCIHandleAlloc( (dvoid *) envhp, (dvoid **) &stmthp,
+           OCI_HTYPE_STMT, (size_t) 0, (dvoid **) 0);
+
+  if (status!=OCI_SUCCESS)
+  {
+		*ERR_is=status;
+		G_scnt = G_hold;	/* restore stack count */
+
+		return;
+  }
+
+
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF connect */
+

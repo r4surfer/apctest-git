@@ -1,0 +1,348 @@
+*       ****************************************************************~
+*                      New -( W e g o m a   W e l d e r )              *~
+*                  ( As of 05/23/02 - CMG Mods for new 411 (EWD021)    *~
+*                                                                      *~
+*        VALID MODELS - (FRAME)-411,421,431 (SASH)-411,421,431         *~
+*                                                                      *~
+*        EWDPLA42 - Create a File for Wegoma Welder, Pass File to the  *~
+*                   Welder Controler.                                  *~
+*                                                                      *~
+*            Note - 'APCWELD  ' - Table Contains only Valid Weld       *~
+*                                 Models.                              *~
+*                                                                      *~
+*                                                                      *~
+*                    ** Deduct 1/4 Inch from Width and Height, Also    *~
+*                       Mod to Sort. Same Sequence as the Production   *~
+*                       Consolidation Report. ( By Load )              *~
+*                                                                      *~
+*            Note - Special Mod for Size change of DT_REF$8 and        *~
+*                   DT_SEQ$5. Warranty Number and Daily sequence       *~
+*                   Number.                                            *~
+*                                                                      *~
+*            Note - TSO, BSO, FGO Sash's are all By-Passed.            *~
+*                                                                      *~
+*            EWD001 - Special Mods for 411 Line                        *~
+*                                                                      *~
+*            EWD002 - Note that Width and Height decimal values have   *~
+*                     and implied decimal to 100's. The values need    *~
+*                     to be divided by 100 for true decimal value.     *~
+*                                                                      *~  
+* CMG        EWD003 - Mod to add models 441 (same as 421) and 451      *~
+*                     (same as 431).                                   *~
+*                                                                      *~  
+*       ****************************************************************
+
+        sub "EWDPLA42" (count%,          /* Number of Windows         */ ~
+                        scr_dept$,       /* PRODUCTION DEPARTMENT     */ ~
+                        scr_prod$,       /* PRODUCT LINE              */ ~
+                        #1,              /* (APCCUTWK) Saw Work File  */ ~
+                        #2,              /* (GENCODES)                */ ~
+                        #4,              /* (APCCUTEQ) Saw Cross Ref  */ ~
+                        #5,              /* (AMTBOMCD) Equation File  */ ~
+                        #6 )             /* (AMTBOMIF) Validity File  */
+
+        dim readkey$24,                  /* GENCODES Primary Key      */ ~
+            cl$2,                        /* Color                     */ ~
+            model$3,                     /* Model Code                */ ~
+            width$(2%)5,                 /* Width Size                */ ~
+            height$(2%)5,                /* Height Size               */ ~
+            size$5,                      /* SIZE                      */ ~
+            weld_rec$45,                 /* WELD RECORD               */ ~
+            mods$(100%)3,                /* VALID MODELS              */ ~
+            scr_prod$1, scr_dept$3,      /* Product Line              */ ~
+            wrk_key$5,                   /* PRIMARY KEY               */ ~
+            wrk_key1$51,                 /* WORK KEY                  */ ~
+            wrk_rec$200,                 /* WORK RECORD               */ ~
+            part$25,                     /* MFG Part Number           */ ~
+            save_part$25,                /* SAVE MFG PART NUMBER      */ ~
+            save_cl$1,                   /* SAVE COLOR                */ ~
+            ref$5, dt_ref$8,             /* Part Reference Number     */ ~
+            ssq$4, dt_seq$5,             /* Daily Sequence Number     */ ~
+            tw$1,                        /* WIDTH PARTS               */ ~
+            th$1,                        /* HEIGHT PARTS              */ ~
+            col$(100%)25,                /* Cut Description           */ ~
+            eq$(100%)8,                  /* Equation Codes            */ ~
+            ct$(100%)9,                  /* Cut Widths and Heights    */ ~
+            ct(100%),                    /* Cut Wid/Height Decimal    */ ~
+            cr$(100%)10,                 /* Raw Material Part Number  */ ~
+            cp$(100%)2,                  /* Number of Pieces to Cut   */ ~
+            cc$(100%)1,                  /* Cut Piece Yes or No       */ ~
+            sh$(100%)1,                  /* Sash Type ( W, H, N )     */ ~
+            hdr$40,                      /* ASKUSER Header Text       */ ~
+            msg$(3%)79                   /* ASKUSER Info Text         */
+
+        dim f2%(15%),                    /* = 0 if the file is open    */~
+            axd$4,                       /*   doesn't exist, or 0 if   */~
+            name$(15%)8,                 /*   not yet checked (OPENCHCK*/~
+            rslt$(15%)20                 /* Text from file opening     */
+                                         /* Fram Files                 */ 
+            select #7, "@WELDM1@",                                       ~
+                                consec , recsize = 42
+
+            select #8, "@WELDM2@",                                       ~
+                                consec , recsize = 42
+
+            select #9, "@WELDM3@",                                       ~
+                                consec , recsize = 42
+
+            select #10,"@WELDM4@",                                       ~
+                                consec , recsize = 42
+                                         /* Sash Files                  */
+
+            select #12, "@WELDN1@",                                      ~
+                                consec , recsize = 42
+
+            select #13, "@WELDN2@",                                      ~
+                                consec , recsize = 42
+
+            select #14, "@WELDN3@",                                      ~
+                                consec , recsize = 42
+
+            select #15, "@WELDN4@",                                      ~
+                                consec , recsize = 42
+
+            ff% = 6%                     /* Starting Frame Channel */
+            fs% = 11%                    /* Starting Sash Channel  */
+
+            init(" ") name$()
+
+            name$( 7%) = "@WELDM1@"
+            name$( 8%) = "@WELDM2@"
+            name$( 9%) = "@WELDM3@"
+            name$(10%) = "@WELDM4@"
+
+            name$(12%) = "@WELDN1@"
+            name$(13%) = "@WELDN2@"
+            name$(14%) = "@WELDN3@"
+            name$(15%) = "@WELDN4@"
+
+            gosub load_weld                  /* MODS$() - VALID MODELS */
+
+            msg$(1%)= "        The File (@WELDM1@) Already Exists.       "
+
+        REM - NOTE - MODLES (710), (720), (730) HAVE BOTH A FRAM AND SASH
+
+            fcnt%,scnt%,count% = 0%
+            call "SHOSTAT" ("Creating Weld File For (" & scr_dept$ & ")")
+            cw%, ch% = 0%                     /* Load Cut Descriptions */
+            tw$ = "1" : th$ = "2"
+
+            call "APCCUTLD" (scr_prod$, cw%, ch%, tw$, th$, #2, err% )
+            if err% <> 0% then goto exit_program
+            wrk_key$  = all(hex(00))
+            wrk_key1$ = all(hex(00))
+            
+            read #1,key > wrk_key$, using L01450, wrk_key1$, wrk_rec$,     ~
+                                                     eod goto create_done
+            goto L01460
+        create_next
+            read #1, using L01450   , wrk_key1$, wrk_rec$,                 ~
+                                                     eod goto create_done
+L01450:          FMT POS(6), CH(51), CH(200)
+L01460:     part$  = str(wrk_rec$,38%,25%)
+            model$ = str(part$,1%,3%)
+            pp%    = pos("456" = str(part$,11%,1%) )
+            if pp% <> 0% then goto create_next      /* Skip All Sash's */
+
+            for i% = 1% to mod_max%
+               if model$ = mods$(i%) then goto L01560
+            next i%
+            goto create_next
+
+L01560:     if len(part$) < 19 then goto create_next
+               gosub build_weld
+               if width$(1) = " " and height$(1) = " " then              ~
+                                                         goto create_next
+                  dt_ref$ = str(wrk_rec$,1%,8%)
+                  dt_seq$ = str(wrk_rec$,9%,5%)
+                  ref$    = str(dt_ref$,4%,5%)
+                  ssq$    = str(dt_seq$,2%,4%)
+                  gosub lookup_color
+                  gosub build_detail
+                  goto create_next
+        create_done
+            if ff% <> 6%  then close #ff%
+            if fs% <> 11% then close #fs%
+        goto exit_program
+
+        build_detail
+          init(" ") weld_rec$
+                                                    /* Sash is always  */
+                                                    /* 2nd Value, Excep*/
+          for j% = 1% to weld%
+
+              gosub check_count
+              str(weld_rec$,1%,1%)  = "K"            /* DESIGNATOR      */
+              str(weld_rec$,2%,10%) = ssq$&"/"&ref$  /* SEQ / REF NO.   */
+              str(weld_rec$,12%,1%) = "P"            /* Profile         */
+              str(weld_rec$,13%,5%) = model$ & "00"  /* MODEL CODE      */
+              str(weld_rec$,18%,1%) = "T"            /* Color code      */
+              str(weld_rec$,19%,2%) = cl$            /* Color Code      */
+              str(weld_rec$,21%,1%) = "N"            /* Bin or Box      */
+              str(weld_rec$,22%,3%) = str(ssq$,2%,3%)/* Seq No          */
+              str(weld_rec$,25%,1%) = "A"            /* Quantity Code   */
+              str(weld_rec$,26%,3%) = "001"          /* Quantity        */
+                                                     /* (EWD001)        */
+              if j% = 2% and model$ = "421" then                         ~
+                 str(weld_rec$,26%,3%) = "002"       /* Change Quantity */
+                                                     /* (EWD003)        */
+              if j% = 2% and model$ = "441" then                         ~
+                 str(weld_rec$,26%,3%) = "002"       /* Change Quantity */
+
+
+              if j% = 2% and model$ = "431" then                         ~
+                 str(weld_rec$,26%,3%) = "003"       /* Change Quantity */
+                                                     /* (EWD001)        */
+              if j% = 2% and model$ = "451" then                         ~
+                 str(weld_rec$,26%,3%) = "003"       /* Change Quantity */
+                                                     /* (EWD003)        */ 
+              str(weld_rec$,29%,1%) = "X"            /* Height          */
+              str(weld_rec$,30%,5%) = height$(j%)    /* Height Value    */
+              str(weld_rec$,35%,1%) = "Y"            /* Width Value     */
+              str(weld_rec$,36%,5%) = width$(j%)     /* Width           */
+              str(weld_rec$,41%,2%) = "F0"           /* End             */
+                                                     /* (EWD001)        */
+              if j% = 2% then goto L01600
+                 aa = 0.0
+
+                 convert width$(j%) to aa, data goto L01590
+L01590:
+                 aa = (aa / 100)                     /*  (EWD001)       */
+                                                     /*  (EWD002)       */
+                 if aa > 48.875 then goto L01870
+                                                     /* (EWD001)        */
+L01600:       if j% = 1% then                     /* Fram  File         */ ~
+                 write #ff%, weld_rec$, eod goto L01900
+              if j% = 2% then                     /* Sash  File         */ ~
+                 write #fs%, weld_rec$, eod goto L01900
+
+L01870: next j%
+
+        return
+L01900:   call "SHOSTAT" ("(Error)-Writing Sampson Weld Detail?")
+          stop
+          goto L01870
+
+
+        build_weld
+          if part$ = save_part$ then return
+             save_part$ = part$
+
+          init(" ") width$() , height$()
+          w%, h%, weld% = 0%
+          call "APCCUTCC" (part$, 0%, cw%, ch%, eq$(), ct$(), cr$(),     ~
+                     cp$(), cc$(), col$(), ct(), sh$(), tw$, th$,        ~
+                                                        #4, #5, #2, err%)
+          eq% = cw% + ch%
+          for i% = 1% to eq%
+            if sh$(i%) = "W" or sh$(i%) = "H" then goto L02180
+               goto L02320
+                                                    /* DEDUCT 1/4 INCH */
+L02180:     a  = ct(i%) - .25                       /* CONVERT SIZE    */
+            a% = int(a)                             /* WHOLE SIZE      */
+            b  = ( a - a% ) * 100.0
+            b% = int(b)                                /* FRACTION SIZE*/
+            convert a% to str(size$,1%,3%), pic(000)
+            convert b% to str(size$,4%,2%), pic(00)
+
+            if sh$(i%) = "W" then w% = w% + 1%
+            if a% < 12% and sh$(i%) = "W" then goto L02350
+            if sh$(i%) = "H" then h% = h% + 1%
+            if a% > 96% and sh$(i%) = "H" then goto L02350
+            if sh$(i%) = "W" then width$(w%)  = size$
+            if sh$(i%) = "H" then height$(h%) = size$
+
+L02320:   next i%
+          weld% = w%
+        return
+L02350:   init(" ") width$() , height$()        /* Max Limits Exceeded */
+        return
+
+        check_count                                  /* Max Line Counter */
+           if j% <> 1% then  goto L02440
+              fcnt% = fcnt% + 1%                     /* Frame Counter    */
+              if fcnt% = 1% then goto L02470     
+                 if mod(fcnt%,240) <> 0 then return
+                    goto L02470
+L02440:    scnt% = scnt% + 1%                        /* Sash Counter     */
+           if scnt% = 1% then goto L02470           
+              if mod(scnt%,240) <> 0 then return
+L02470:          gosub create_file
+        return
+
+        create_file
+           if j% <> 1% then goto L02570                  /* Frame (A)   */
+               fx% = ff%
+               ff% = ff% + 1%                            /* Next File   */
+               fy% = ff%
+               if fcnt% = 1% then goto L02630
+               goto L02610
+L02570:    fx% = fs%                                     /* Sash   (B)  */
+           fs% = fs% + 1%                                /* Next File   */
+           fy% = fs%
+           if scnt% = 1% then goto L02630
+L02610:    gosub create_file_a
+        return
+L02630:    gosub create_file_b                   /* 1st Time for Entry */
+        return
+
+        file_exists
+            comp% = 2%
+            hdr$ = "****** Weld File Exists ******"
+        REM MSG$(1) = "        The File (@WELD@) Already Exists.       "
+            msg$(2) = "             B u i l d   W E G O M A             "
+            msg$(3) = "Press <RETURN> To Continue, or PF(16) to Delete. "
+            call "ASKUSER" (comp%, hdr$, msg$(1), msg$(2), msg$(3))
+        return
+
+        lookup_color
+          if str(part$,4%,1%) = save_cl$ then return
+             save_cl$ = str(part$,4%,1%)
+          init(" ") readkey$
+          str(readkey$,1%,15%)  = "COLOR    " & str(part$,4%,1%)
+          read #2,key = readkey$, using L02810  , cl$, eod goto L02820
+L02810:      FMT POS(25), CH(2)
+L02820: return
+
+        exit_program
+
+        end
+
+        create_file_a                       /* Close Old File First */
+            close #fx%
+        create_file_b                       /* Open New File        */
+            call "SHOSTAT" ("Creating Weld File - "& name$(fy%) )
+            call "OPENFILE" (#fy%,"IO   ", f2%(fy%), rslt$(fy%), axd$ )
+            if f2%(fy%) <> 0% then goto L03200
+               str(msg$(1%),19%,8%) = name$(fy%)
+               gosub file_exists
+               if comp% <> 16% then goto L03160
+                  call "FILEBGON" addr(#fy%)
+                  goto L03200
+
+L03160:        close #fy%
+               call "OPENFILE" (#fy%,"EXTND",f2%(fy%),rslt$(fy%), axd$ )
+               goto L03250
+
+L03200:     str(rslt$(fy%),1%,6%)  = "OUTPTP"
+            str(rslt$(fy%),7%,8%)  = "00001000"
+            str(rslt$(fy%),15%,3%) = "100"
+            str(rslt$(fy%),18%,3%) = "100"
+            call "OPENFILE" (#fy%, "OUTPT", f2%(fy%), rslt$(fy%), axd$ )
+L03250: return
+
+        load_weld
+          mod_max% = 0%
+          init(" ") readkey$, mods$()
+          str(readkey$,1%,9%) = "APCWELD  "
+
+L03320:   read #2,key > readkey$, using L03330, readkey$, eod goto L03380
+L03330:      FMT CH(24)
+          if str(readkey$,1%,9%) <> "APCWELD  " then goto L03380
+             mod_max% = mod_max% + 1%
+             if mod_max% > 100% then mod_max% = 100%
+          mods$(mod_max%) = str(readkey$,10%,3%)
+          goto L03320
+L03380: return
+
+

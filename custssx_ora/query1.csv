@@ -1,0 +1,302 @@
+/*
+ query1: Thu Apr  4 15:18:43 2002
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+/* #include "connect.h" */
+
+extern sword status;
+extern ub4 counter;
+extern OCISvcCtx *svchp;
+extern OCIStmt   *stmthp;
+extern OCIParam *mypard;
+extern OCIError *errhp;
+extern OCIEnv *envhp;
+extern ub2 field_len[255];
+extern text *field[255];
+extern text *field_name[255];
+extern ub2 dtype;
+extern ub2 dsize;
+extern OCIInd cmg[255];
+
+void checkerr( OCIError *errhp, sword status );
+void cleanup(void);
+
+
+QUERY1 (STMT1_TS, STMT2_TS, STMT3_TS, STMT4_TS, STMT5_TS, STMT6_TS, STMT7_TS, STMT8_TS, ERR_IS)
+struct symbol *STMT1_TS;
+struct symbol *STMT2_TS;
+struct symbol *STMT3_TS;
+struct symbol *STMT4_TS;
+struct symbol *STMT5_TS;
+struct symbol *STMT6_TS;
+struct symbol *STMT7_TS;
+struct symbol *STMT8_TS;
+struct symbol *ERR_IS;
+{
+
+#include "query.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+       int len1;
+       int len2;
+       int len3;
+       int len4;
+       int len5;
+       int len6;
+       int len7;
+       int len8;
+       char string1[2001];
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* pointer to strings */
+
+	text *STMT1_ts;
+	text *STMT2_ts;
+	text *STMT3_ts;
+	text *STMT4_ts;
+	text *STMT5_ts;
+	text *STMT6_ts;
+	text *STMT7_ts;
+	text *STMT8_ts;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 9) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+	if ((Call_args >= 9) && (STMT1_TS != NULL))
+	{
+		STMT1_ts = (text *) *( (long *) STMT1_TS + 1); 
+                memcpy(string1, STMT1_ts, 250);
+
+		STMT2_ts = (text *) *( (long *) STMT2_TS + 1); 
+                memcpy(string1+250, STMT2_ts, 250);
+
+		STMT3_ts = (text *) *( (long *) STMT3_TS + 1); 
+                memcpy(string1+500, STMT3_ts, 250);
+
+		STMT4_ts = (text *) *( (long *) STMT4_TS + 1); 
+                memcpy(string1+750, STMT4_ts, 250);
+
+		STMT5_ts = (text *) *( (long *) STMT5_TS + 1); 
+                memcpy(string1+1000, STMT5_ts, 250);
+
+		STMT6_ts = (text *) *( (long *) STMT6_TS + 1); 
+                memcpy(string1+1250, STMT6_ts, 250);
+
+		STMT7_ts = (text *) *( (long *) STMT7_TS + 1); 
+                memcpy(string1+1500, STMT7_ts, 250);
+
+		STMT8_ts = (text *) *( (long *) STMT8_TS + 1); 
+                memcpy(string1+1750, STMT8_ts, 250);
+
+                string1[1999] = '\0';
+	}
+
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *eck
+*~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * QUERY - Query a database in Oracle and return results. *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "QUERY" ( stmt1$,           :: SQL Stmt Passed In  ::~*/ 
+/* 000021                           stmt2$,           :: Result Set Pass Back::~*/ 
+/* 000022                           err% )            :: 0% = OK             ::*/ 
+/* 000023*/ 
+/* 000024            dim stmt1$250,                      :: SQL Stmt 1 Passed In::~*/ 
+/* 000025                stmt2$250                       :: SQL Stmt 1 Passed In::*/ 
+/* 000026*/ 
+/* 000027                init(" ") stmt1$*/ 
+/*	wb_vinit (" ",  STMT1_TS, NULL); */
+/* 000028                stmt2$ = " "*/ 
+/*	str_asgn (" ", (long) 1 , 
+		(char *)(STMT2_TS->p), (long)(STMT2_TS->len)); */
+
+	sb4 parm_status;
+	text *col_name;
+	ub4 col_name_len;
+	OCIDefine *defnp = (OCIDefine *) 0;
+	int i;
+
+	/* prepare the statement */
+/*        printf("Statement 1 %s\n", STMT1_ts); */
+	checkerr(errhp, OCIStmtPrepare(stmthp, errhp, (text *) string1,
+                                (ub4) strlen((char *) string1),
+                                (ub4) OCI_NTV_SYNTAX, (ub4) OCI_DEFAULT));
+
+
+
+	/* execute and pre-fetch */
+  if (status = OCIStmtExecute(svchp, stmthp, errhp, (ub4) 0, (ub4) 0,
+               (CONST OCISnapshot *) NULL, (OCISnapshot *) NULL, OCI_DEFAULT))
+  {
+    if (status == OCI_NO_DATA)
+	{
+		*ERR_is=OCI_NO_DATA; /* no data */
+	}
+      
+    else
+    {
+      checkerr(errhp, status);
+      cleanup();
+      *ERR_is=OCI_ERROR;
+	  return;
+    }
+  }
+
+	counter=1;
+	parm_status= OCIParamGet(stmthp, OCI_HTYPE_STMT, errhp, (dvoid**)&mypard, (ub4) counter);
+
+	while(parm_status==OCI_SUCCESS) {
+		checkerr(errhp,OCIAttrGet((dvoid*) mypard, (ub4) OCI_DTYPE_PARAM, (dvoid*)&dtype, (ub4 *) 0, (ub4) OCI_ATTR_DATA_TYPE,(OCIError *) errhp));
+		checkerr(errhp,OCIAttrGet((dvoid*) mypard, (ub4) OCI_DTYPE_PARAM, (dvoid*)&dsize, (ub4 *) 0, (ub4) OCI_ATTR_DATA_SIZE,(OCIError *) errhp));
+		checkerr(errhp,OCIAttrGet((dvoid*) mypard, (ub4) OCI_DTYPE_PARAM, (dvoid*)&col_name, (ub4 *)&col_name_len, (ub4) OCI_ATTR_NAME,(OCIError *) errhp));
+                if (dtype==12)
+		{
+	       	    field_len[counter]=dsize + 3;
+                }
+                else
+                {
+		    field_len[counter]=dsize;
+                }
+
+
+
+		field_name[counter] = (text *) malloc((int)strlen((const char *)col_name)); /* Let's not forget to free after we are done! */
+		strcpy((char *)field_name[counter],(const char *)col_name);
+
+		counter++;
+		parm_status= OCIParamGet(stmthp, OCI_HTYPE_STMT, errhp,(dvoid**) &mypard, (ub4) counter);
+	}
+
+	for(i=1;i<counter;i++)
+	{
+		field[i] = (text *) malloc((int)field_len[i] +1); /* Let's not forget to free after we are done! */
+							/*                printf ("\nfield --> %s \n", field[i]); */
+							/*                printf ("\ncounter --> %d \n", counter);  */
+		memset(field[i],0,field_len[i]);
+
+
+		if (status = OCIDefineByPos(stmthp,&defnp,errhp,i,(ub1 *) field[i],field_len[i]+1,SQLT_STR, (dvoid*)&cmg[i], (ub2 *)0, (ub2 *)0, OCI_DEFAULT))
+		{
+			checkerr(errhp,status);
+			cleanup();
+		}
+
+
+	}
+
+
+
+
+
+/* 000029*/ 
+/* 000030            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF query */
+
+void checkerr(OCIError *errhp,sword status)
+{
+  text errbuf[512];
+  sb4 errcode = 0;
+
+  switch (status)
+  {
+  case OCI_SUCCESS:
+    break;
+  case OCI_SUCCESS_WITH_INFO:
+    (void) printf("Error - OCI_SUCCESS_WITH_INFO\n");
+    break;
+  case OCI_NEED_DATA:
+    (void) printf("Error - OCI_NEED_DATA\n");
+    break;
+  case OCI_NO_DATA:
+    (void) printf("Error - OCI_NODATA\n");
+    break;
+  case OCI_ERROR:
+    (void) OCIErrorGet((dvoid *)errhp, (ub4) 1, (text *) NULL, &errcode,
+                        errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+    (void) printf("Error - %.*s\n", 512, errbuf);
+    break;
+  case OCI_INVALID_HANDLE:
+    (void) printf("Error - OCI_INVALID_HANDLE\n");
+    break;
+  case OCI_STILL_EXECUTING:
+    (void) printf("Error - OCI_STILL_EXECUTE\n");
+    break;
+  case OCI_CONTINUE:
+    (void) printf("Error - OCI_CONTINUE\n");
+    break;
+  default:
+    break;
+  }
+}
+
+void cleanup()
+{
+  if (envhp)
+    (void) OCIHandleFree((dvoid *) envhp, OCI_HTYPE_ENV);
+  return;
+}
+

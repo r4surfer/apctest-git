@@ -1,0 +1,101 @@
+/*
+ discnnct: Thu Apr  4 15:18:19 2002
+ */
+
+#include <oci.h>
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+/* #include "connect.h" */
+extern OCIEnv *envhp;
+
+
+static void cleanup(void);
+
+DISCNNCT (ERR_IS)
+struct symbol *ERR_IS;
+{
+
+#include "discnnct.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * DISCNNCT - Close a connection to the Oracle Database.     *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "DISCNNCT" ( err% )          :: 0% = OK               ::*/ 
+/* 000021*/ 
+/* 000022            end*/ 
+	cleanup();
+
+	*ERR_is = 0;
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF discnnct */
+
+void cleanup()
+{
+  if (envhp)
+    (void) OCIHandleFree((dvoid *) envhp, OCI_HTYPE_ENV);
+  return;
+}

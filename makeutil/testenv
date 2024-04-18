@@ -1,0 +1,109 @@
+#!/usr/bin/csh
+
+# Routine to 
+#
+
+if ( ! ($1 == '' )) then
+	set parm1 = $1
+	if ( ! ($2 == '' )) then
+		set parm2 = $2
+	else
+		set parm2 = ''
+	endif
+else
+	set parm1 = ''
+	set parm2 =''
+endif
+
+(cd .. ; pwd > ./makeutil/path.txt )
+set defpath = `cat path.txt`
+echo 'normal default path: '$defpath
+
+if ($parm1 == 'noinc') then
+	goto check_load
+endif
+if ($parm2 == 'noinc') then 
+	goto check_load
+endif
+
+set resp = 99
+while ($resp == 99)
+if ( ! ( -d ../include1)) then
+	if ( -f ./pathinc.txt) then
+		set target1 = `cat ./pathinc.txt`
+	else
+		set target1 = ''
+	endif
+	echo ' '
+	echo 'Include1 not found'
+	echo ' '
+	echo ' Enter path for b_cgen, include1, include2, load2'
+	echo ' Default:'
+	if ($target1 == '') then
+		echo '[no valid path set]'
+	else
+		echo $target1
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set target1 = $opresp
+	endif
+	if ( ! -d $target1/include1 ) then
+		set target1 = ''
+	else
+		set resp = 0
+		echo $target1 > ./pathinc.txt
+	endif
+else
+echo 'include1 found, using normal default: '$defpath
+set resp = 0
+rm -f ./pathinc.txt
+endif
+
+end
+
+check_load:
+
+if ($parm1 == 'noload') then
+	exit
+endif
+if ($parm2 == 'noload') then
+	exit
+endif
+
+set resp = 99
+while ($resp == 99)
+if ( ! ( -d ../load1)) then
+	if ( -f ./pathld.txt) then
+		set target1 = `cat ./pathld.txt`
+	else
+		set target1 = ''
+	endif
+	echo ' '
+	echo 'load1 not found'
+	echo ' '
+	echo ' Enter path for load1'
+	echo ' Default:'
+	if ($target1 == '') then
+		echo '[no valid path set]'
+	else
+		echo $target1
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set target1 = $opresp
+	endif
+	if ( ! -d $target1/load1 ) then
+		set target1 = ''
+	else
+		set resp = 0
+		echo $target1 > ./pathld.txt
+	endif
+else
+echo 'load1 found, using normal default: '$defpath
+set resp = 0
+rm -f ./pathld.txt
+endif
+
+end
+

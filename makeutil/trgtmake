@@ -1,0 +1,6 @@
+
+target:
+	(if ( test ! -d $(OBJ) ) then       \
+		mkdir $(OBJ);               \
+	fi)
+

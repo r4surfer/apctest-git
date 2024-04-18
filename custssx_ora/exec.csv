@@ -1,0 +1,164 @@
+/*
+ exec: thursday april 25th 2002
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+extern sword status;
+extern OCISvcCtx *svchp;
+extern OCIStmt   *stmthp;
+extern OCIError *errhp;
+extern ub2 dtype;
+extern ub2 dsize;
+
+extern void checkerr( OCIError *errhp, sword status );
+extern void cleanup(void);
+
+
+EXEC (STMT1_TS, STMT2_TS, ERR_IS)
+struct symbol *STMT1_TS;
+struct symbol *STMT2_TS;
+struct symbol *ERR_IS;
+{
+
+#include "exec.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ERR_is;
+
+/* pointer to strings */
+
+	text *STMT1_ts;
+	text *STMT2_ts;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 3) && (ERR_IS != NULL))
+		ERR_is = (long *) *( (long *) ERR_IS + 1);
+	if ((Call_args >= 3) && (STMT1_TS != NULL))
+	{
+		STMT1_ts = (text *) *( (long *) STMT1_TS + 1);
+	}
+	if ((Call_args >= 3) && (STMT2_TS != NULL))
+	{
+		STMT2_ts = (text *) *( (long *) STMT2_TS + 1);
+	}
+
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * QUERY - Query a database in Oracle and return results. *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "QUERY" ( stmt1$,           :: SQL Stmt Passed In  ::~*/ 
+/* 000021                           stmt2$,           :: Result Set Pass Back::~*/ 
+/* 000022                           err% )            :: 0% = OK             ::*/ 
+/* 000023*/ 
+/* 000024            dim stmt1$250,                      :: SQL Stmt 1 Passed In::~*/ 
+/* 000025                stmt2$250                       :: SQL Stmt 1 Passed In::*/ 
+/* 000026*/ 
+/* 000027                init(" ") stmt1$*/ 
+/*	wb_vinit (" ",  STMT1_TS, NULL); */
+/* 000028                stmt2$ = " "*/ 
+/*	str_asgn (" ", (long) 1 , 
+		(char *)(STMT2_TS->p), (long)(STMT2_TS->len)); */
+
+	sb4 parm_status;
+	text *col_name;
+	ub4 col_name_len;
+	ub4 num_err;
+	OCIDefine *defnp = (OCIDefine *) 0;
+	int i;
+
+	/* prepare the statement */
+/*        printf("Statement 1 %s\n", STMT1_ts); */
+	checkerr(errhp, OCIStmtPrepare(stmthp, errhp, STMT1_ts,
+                                (ub4) strlen((char *) STMT1_ts),
+                                (ub4) OCI_NTV_SYNTAX, (ub4) OCI_COMMIT_ON_SUCCESS));
+
+	/* execute and pre-fetch */
+  if (status = OCIStmtExecute(svchp, stmthp, errhp, (ub4) 1, (ub4) 0,
+               (CONST OCISnapshot *) NULL, (OCISnapshot *) NULL, OCI_COMMIT_ON_SUCCESS))
+  {
+      /* printf("HERE 1\n");  */
+      checkerr(errhp, status);
+      cleanup();
+      *ERR_is=OCI_ERROR;
+       G_scnt = G_hold;	         /* restore stack count */
+	  return;
+  }
+  
+  if (STMT1_ts[0] == 'U') 
+  {
+	  OCIAttrGet(stmthp, OCI_HTYPE_STMT, &num_err, (ub4) 0, OCI_ATTR_ROW_COUNT, errhp);
+	  if (num_err <= 0 )
+	  {
+		    *ERR_is= -1;
+		    return;
+      }
+	  
+  }  
+/* 000029*/ 
+/* 000030            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+        /* printf("HERE 2\n"); */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF query */
+

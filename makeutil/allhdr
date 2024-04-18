@@ -1,0 +1,6 @@
+#	makefile to control multiple makefiles in a library
+#	Normally used to control linking of .o to .sl or .a
+#	List of make -f makexxx
+#	.a targets may include make ... install (ar sv)
+
+all:

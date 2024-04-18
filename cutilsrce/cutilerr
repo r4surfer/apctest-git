@@ -1,0 +1,90 @@
+cpp: "../include2/isport.h", line 63: warning 2028: Found comment inside comment started on line 63.
+cpp: "../include2/isport.h", line 64: warning 2028: Found comment inside comment started on line 64.
+cpp: "../include2/isport.h", line 73: warning 2028: Found comment inside comment started on line 73.
+cpp: "../include2/isport.h", line 82: warning 2028: Found comment inside comment started on line 82.
+cpp: "../include2/isport.h", line 83: warning 2028: Found comment inside comment started on line 83.
+cpp: "../include2/isport.h", line 129: warning 2028: Found comment inside comment started on line 129.
+cpp: "../include2/isport.h", line 150: warning 2028: Found comment inside comment started on line 150.
+cpp: "../include2/isport.h", line 158: warning 2028: Found comment inside comment started on line 158.
+cpp: "../include2/isport.h", line 167: warning 2028: Found comment inside comment started on line 167.
+cpp: "../include2/isport.h", line 177: warning 2028: Found comment inside comment started on line 177.
+cpp: "../include2/isport.h", line 185: warning 2028: Found comment inside comment started on line 185.
+cpp: "../include2/isport.h", line 195: warning 2028: Found comment inside comment started on line 195.
+cpp: "../include2/isport.h", line 226: warning 2028: Found comment inside comment started on line 226.
+cpp: "../include2/isport.h", line 230: warning 2028: Found comment inside comment started on line 230.
+cpp: "../include2/isport.h", line 63: warning 2028: Found comment inside comment started on line 63.
+cpp: "../include2/isport.h", line 64: warning 2028: Found comment inside comment started on line 64.
+cpp: "../include2/isport.h", line 73: warning 2028: Found comment inside comment started on line 73.
+cpp: "../include2/isport.h", line 82: warning 2028: Found comment inside comment started on line 82.
+cpp: "../include2/isport.h", line 83: warning 2028: Found comment inside comment started on line 83.
+cpp: "../include2/isport.h", line 129: warning 2028: Found comment inside comment started on line 129.
+cpp: "../include2/isport.h", line 150: warning 2028: Found comment inside comment started on line 150.
+cpp: "../include2/isport.h", line 158: warning 2028: Found comment inside comment started on line 158.
+cpp: "../include2/isport.h", line 167: warning 2028: Found comment inside comment started on line 167.
+cpp: "../include2/isport.h", line 177: warning 2028: Found comment inside comment started on line 177.
+cpp: "../include2/isport.h", line 185: warning 2028: Found comment inside comment started on line 185.
+cpp: "../include2/isport.h", line 195: warning 2028: Found comment inside comment started on line 195.
+cpp: "../include2/isport.h", line 226: warning 2028: Found comment inside comment started on line 226.
+cpp: "../include2/isport.h", line 230: warning 2028: Found comment inside comment started on line 230.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "./hexed.c", line 956: warning 2028: Found comment inside comment started on line 955.
+cc: "hexed.c", line 531: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 531: warning 563: Argument #2 is not the correct type.
+cc: line 504: warning 5004: Uninitialized variable "spos" in function "do_find" (5004)
+cc: "hexed.c", line 594: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 594: warning 563: Argument #2 is not the correct type.
+cc: "hexed.c", line 693: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 693: warning 563: Argument #2 is not the correct type.
+cc: "hexed.c", line 854: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 854: warning 563: Argument #2 is not the correct type.
+cc: "hexed.c", line 1088: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 1088: warning 563: Argument #1 is not the correct type.
+cc: "hexed.c", line 1088: warning 604: Pointers are not assignment-compatible.
+cc: "hexed.c", line 1088: warning 563: Argument #3 is not the correct type.
+cpp: "../include1/yacc.h", line 58: warning 2001: Redefinition of macro MAX.
+cpp: "../include1/yacc.h", line 59: warning 2001: Redefinition of macro MIN.
+cpp: "../include2/isport.h", line 63: warning 2028: Found comment inside comment started on line 63.
+cpp: "../include2/isport.h", line 64: warning 2028: Found comment inside comment started on line 64.
+cpp: "../include2/isport.h", line 73: warning 2028: Found comment inside comment started on line 73.
+cpp: "../include2/isport.h", line 82: warning 2028: Found comment inside comment started on line 82.
+cpp: "../include2/isport.h", line 83: warning 2028: Found comment inside comment started on line 83.
+cpp: "../include2/isport.h", line 129: warning 2028: Found comment inside comment started on line 129.
+cpp: "../include2/isport.h", line 150: warning 2028: Found comment inside comment started on line 150.
+cpp: "../include2/isport.h", line 158: warning 2028: Found comment inside comment started on line 158.
+cpp: "../include2/isport.h", line 167: warning 2028: Found comment inside comment started on line 167.
+cpp: "../include2/isport.h", line 177: warning 2028: Found comment inside comment started on line 177.
+cpp: "../include2/isport.h", line 185: warning 2028: Found comment inside comment started on line 185.
+cpp: "../include2/isport.h", line 195: warning 2028: Found comment inside comment started on line 195.
+cpp: "../include2/isport.h", line 226: warning 2028: Found comment inside comment started on line 226.
+cpp: "../include2/isport.h", line 230: warning 2028: Found comment inside comment started on line 230.
+cc: "remdels.c", line 125: warning 604: Pointers are not assignment-compatible.
+cc: "remdels.c", line 125: warning 563: Argument #2 is not the correct type.
+cpp: "../include2/isport.h", line 63: warning 2028: Found comment inside comment started on line 63.
+cpp: "../include2/isport.h", line 64: warning 2028: Found comment inside comment started on line 64.
+cpp: "../include2/isport.h", line 73: warning 2028: Found comment inside comment started on line 73.
+cpp: "../include2/isport.h", line 82: warning 2028: Found comment inside comment started on line 82.
+cpp: "../include2/isport.h", line 83: warning 2028: Found comment inside comment started on line 83.
+cpp: "../include2/isport.h", line 129: warning 2028: Found comment inside comment started on line 129.
+cpp: "../include2/isport.h", line 150: warning 2028: Found comment inside comment started on line 150.
+cpp: "../include2/isport.h", line 158: warning 2028: Found comment inside comment started on line 158.
+cpp: "../include2/isport.h", line 167: warning 2028: Found comment inside comment started on line 167.
+cpp: "../include2/isport.h", line 177: warning 2028: Found comment inside comment started on line 177.
+cpp: "../include2/isport.h", line 185: warning 2028: Found comment inside comment started on line 185.
+cpp: "../include2/isport.h", line 195: warning 2028: Found comment inside comment started on line 195.
+cpp: "../include2/isport.h", line 226: warning 2028: Found comment inside comment started on line 226.
+cpp: "../include2/isport.h", line 230: warning 2028: Found comment inside comment started on line 230.
+cpp: "../include2/isport.h", line 63: warning 2028: Found comment inside comment started on line 63.
+cpp: "../include2/isport.h", line 64: warning 2028: Found comment inside comment started on line 64.
+cpp: "../include2/isport.h", line 73: warning 2028: Found comment inside comment started on line 73.
+cpp: "../include2/isport.h", line 82: warning 2028: Found comment inside comment started on line 82.
+cpp: "../include2/isport.h", line 83: warning 2028: Found comment inside comment started on line 83.
+cpp: "../include2/isport.h", line 129: warning 2028: Found comment inside comment started on line 129.
+cpp: "../include2/isport.h", line 150: warning 2028: Found comment inside comment started on line 150.
+cpp: "../include2/isport.h", line 158: warning 2028: Found comment inside comment started on line 158.
+cpp: "../include2/isport.h", line 167: warning 2028: Found comment inside comment started on line 167.
+cpp: "../include2/isport.h", line 177: warning 2028: Found comment inside comment started on line 177.
+cpp: "../include2/isport.h", line 185: warning 2028: Found comment inside comment started on line 185.
+cpp: "../include2/isport.h", line 195: warning 2028: Found comment inside comment started on line 195.
+cpp: "../include2/isport.h", line 226: warning 2028: Found comment inside comment started on line 226.
+cpp: "../include2/isport.h", line 230: warning 2028: Found comment inside comment started on line 230.

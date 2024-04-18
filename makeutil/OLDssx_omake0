@@ -1,0 +1,17 @@
+#	b_cgen makefile
+# makefile for 'c' generation, COMPILE Sub Source Programs!
+#  Exclusive for programs in SUB Source output to .o objects
+
+
+# Set up the variables
+CFLAGS=-c -Ae +Oall +z -D_HPUX_SOURCE
+
+OS2=../subsrce2_o
+OS3=../subsrce3_o
+OR2=../subsrcr2_o
+OR3=../subsrcr3_o
+OCUSTSUBS=../custsubs_o
+OPRESUBS=../presubs_o
+
+# Location for the stored objects to be shipped.
+OBJ= \

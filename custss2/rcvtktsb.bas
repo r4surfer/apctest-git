@@ -1,0 +1,567 @@
+        REM CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC~
+            *                                                           *~
+            *  RRRR    CCC   V   V  TTTTT  K  K   TTTTT  SSSSS  BBBB    *~
+            *  R   R  C   C  V   V    T    K K      T    S      B   B   *~
+            *  RRRR   C      V   V    T    KK       T    SSSSS  BBBB    *~
+            *  R   R  C   C   V V     T    K K      T        S  B   B   *~
+            *  R   R   CCC     V      T    K  K     T    SSSSS  BBBB    *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            * RCVTKTSB - Sub for printing Receiver Tickets          .   *~
+            *-----------------------------------------------------------*~
+            * THIS PROGRAM CONTAINS VALUABLE TRADE SECRETS AND PROPRIE- *~
+            * TARY ASSETS OF CAELUS ASSOCIATES, INC., SPOKANE, WA, EM-  *~
+            * BODYING SUBSTANTIAL CREATIVE EFFORTS  AND CONFIDENTIAL    *~
+            * INFORMATION.  UNAUTHORIZED USE, COPYING, DECOMPILING,     *~
+            * TRANSLATING, DISCLOSURE, OR TRANSFER OF IT IS PROHIBITED. *~
+            * COPYRIGHT (C) 1983, AN UNPUBLISHED WORK BY CAELUS ASSSO-  *~
+            * CIATES, INC., SPOKANE, WA.  ALL RIGHTS RESERVED.          *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 03/02/88 ! ORIGINAL                                 ! MDE *~
+            * 04/13/92 ! PRR 11889, 11890 - Chg'd tichet heighth  ! MLJ *~
+            *          !   from 2 5/8" to 3 1/2".                 !     *~
+            * 09/23/92 ! Honors passed in ticket size.            ! JDH *~
+            * 05/27/94 ! PRR 13182.  Init variables.              ! JDH *~
+            * 09/27/94 ! PRR 10560,12629,13289.  Ok, I'll have QC ! JDH *~
+            *          !   tickets print.                         !     *~
+            *          ! Also, tried to clean things up.          !     *~
+            * 12/05/94 ! Now prints Vendor and Expense Acct if    ! RJH *~
+            *          !   room on ticket. Added Vendor Channel.  !     *~
+            * 03/16/99 ! (EWD001) Custom Site Modifications       ! BWS *~
+            CAELUSASSOCIATESSPOKANEWASHINGTONALLRIGHTSRESERVEDCAELUSASSOC
+
+        REM   ***********************************************************~
+              * #3 ! VENDOR   ! VENDOR MASTER FILE                      *~
+              * #5 ! VBKLINES                                            ~
+              * #6 ! HNYMASTR                                            ~
+              * #7 ! RCVHNYTF                                            ~
+              * #32! HNYQUAN                                             ~
+              * #36! RCVTIF                                              ~
+              * #37! RCVTIF2                                             ~
+              * #38! RCVLINES                                            ~
+               *********************************************************
+
+        sub "RCVTKTSB" (org_fill%, #5, #6, #7, #32, #36, #37, #38, #3)
+
+        dim diskkey$100, oldreadkey$100, /* Disk key for plow routines */~
+            expense_acct$12,             /* G/L Expense Account        */~
+            print_extra$1,               /* Print Ven & ExpAcct Flag   */~
+            oprntamt$(7)10,              /* Printable Amounts          */~
+            orecvtd$10,                  /* Old Received To Date       */~
+            ostuom$10,                   /* Old Store UOM              */~
+            rkey$100,                    /* RCVLINES KEY               */~
+            part$25,                     /* Part Number                */~
+            partdesc$32,                 /* PART DESCRIPTION           */~
+            binloc$8,                    /* BIN                        */~
+            scpbinloc$8,                 /* Scrap Bin Location         */~
+            plowkey$100,                 /* Disk key for plow routines */~
+            ponumber$16,                 /* Purchase Order Number      */~
+/*EWD001*/  po_ln$3,                     /* P.O. Line Item No.         */~
+            prntamt$(7)10,               /* Printable Amounts          */~
+            recvtd$10,                   /* Received To Date           */~
+            rejcode$6,                   /* Rejected Code              */~
+            readkey$100,                 /* Disk key                   */~
+            rcvkey$100,                  /* Receiver Number            */~
+            rptid$6,                     /* Report ID                  */~
+            stuom$4,                     /* Inven. Unit Of Measure     */~
+            measr$10,                    /* Store Unit Of Measure      */~
+            newqty(7),                   /* New quantities             */~
+            oldqty(7),                   /* Old quantities             */~
+            pad$10,                      /* Pad w/ Spaces              */~
+            qhand$10,                    /* QUANTITY ON HAND           */~
+            qhandscp$10,                  /* Amount In Scrap           */~
+            qtyin$10,                    /* QTY TO INDIVIDUAL STORE-LOT*/~
+            ojobno$8,                    /* OLD JOBNO                  */~
+            orejcode$6,                  /* OLD REJECT CODE            */~
+            netqty(7),                   /* Net quantity changes       */~
+            jobno$8,                     /*                            */~
+            qtyrmain$10,oqtyrmain$10,    /* Qtyremain open             */~
+            reqstd$20,                   /* WHO ORDERED ITEMS          */~
+            delvr$20,                    /* DELIVER TO                 */~
+            date$8,                      /* DATE                       */~
+            storeno$3,                   /* Store number               */~
+            ostoreno$3,                  /* Old Store                  */~
+            storlot$6,                   /* LOT                        */~
+            ostorlot$6,                  /* OLD LOT                    */~
+            scpstore$3,                  /* SCRAP STORE                */~
+            oscpstore$3,                 /* OLD SCRAP STORE            */~
+            scplot$6,                    /* SCRAP LOT                  */~
+            oscplot$6,                   /* OLD SCRAP LOT              */~
+            userid$3,                    /* Userid of this user        */~
+            venpart$25,                  /* Vendor Part Number         */~
+            varhead$25,                  /* Variable Header            */~
+            recever$16,                  /* Receiver                   */~
+/*EWD001*/  last_rcvr$16                 /* Previous Receiver No.      */~
+
+        dim                                                              ~
+            buyer$3,                     /* Buyer ID                   */~
+            stat$8,                      /* Orig or Re-print variable  */~
+            porcvtd$10,                  /* RECEIVED TO DATE (P.O.)    */~
+            recvrec$(16)50,              /* Line Item                  */~
+            ovenuom$4,                   /* Vendor Unit of Measure     */~
+            venuom$4,                    /* " "                        */~
+            ticket$13,                   /* Ticket title               */~
+            vencode$9,                   /* Vendor code                */~
+            vendname$30                  /* Vendor Sort Name           */
+
+        dim f2%(64),                     /* FILE STATUS FLAGS          */~
+            f1%(64)                      /* RECORD-ON-FILE FLAGS       */~
+
+        REM *************************************************************~
+            *                  Release Version ID Section               *~
+            *************************************************************
+            dim cms2v$50
+            cms2v$ = "R6.03.02 01/17/95 'A' PRRs & Critical Problems    "
+        REM *************************************************************
+            mat f2% = con
+            rptid$ = "RCV007"
+
+        REM *************************************************************~
+            *                 I N I T I A L I Z A T I O N               *~
+            *-----------------------------------------------------------*~
+            * Initializes keys, that sort of thing.                     *~
+            *************************************************************
+
+            found% = 0%
+            tkt_cnt% = 99%      /* Forces Page Feed */
+            if userid$ = " " then call "EXTRACT" addr("ID", userid$)
+
+            call "SHOSTAT" ("Processing Receiving Transactions")
+
+            /* GET  TODAYS DATE */
+
+            date$ = date
+            call "DATEFMT" (date$)
+
+            select printer (134)
+            call "SETPRNT" (rptid$," ",0%,0%)
+            mat newqty = zer : mat oldqty = zer : mat netqty = zer
+
+            oldreadkey$ = all(hex(00))
+            str(oldreadkey$,,3) = userid$
+
+        readrec
+            call "PLOWALTS"(#36, oldreadkey$, 1%,3%, f1%(36)) /*RCVTIF*/
+            if f1%(36) = 0% then L47500 /* END */
+            found% = 1%
+            get #36, using L13500, diskkey$
+L13500:         FMT POS(12), CH(16)
+            init (hex(00)) str(diskkey$,17%)
+
+
+        nxtrcvt2
+            mat newqty = zer : stuom, recvd, qtyrmain = 0
+            recever$, ponumber$, vencode$, part$, venuom$, rejcode$,     ~
+                jobno$, vendname$  = " "
+            call "PLOWNEXT" (#37,diskkey$,16%,f1%(37))  /* RCVTIF2 */
+            if f1%(37) = 0% then readrec /* NEXT RCVTIF RECORD */
+
+
+
+            get #37 using L15000, str(recvrec$())
+L15000:     FMT CH(800)
+
+            recever$ = str(recvrec$(),26,16)  /* Receiver No. */
+            ponumber$ = str(recvrec$(),51,16) /* PO NUMBER */
+            vencode$ = str(recvrec$(),42,9) /* Vendor Code */
+            part$ = str(recvrec$(),1,25)  /* Part Number  */
+
+            if str(part$,,16) = "*CARRIER FREIGHT" then nxtrcvt2
+            if str(recvrec$(),78,16) = "*CARRIER FREIGHT" then nxtrcvt2
+
+            get #37, using L16300, newqty(), stuom, venuom$, recvd ,      ~
+                          expense_acct$, scpstore$, scplot$,  rejcode$,  ~
+                          qtyrmain, jobno$
+L16300:     FMT POS(156), 7*PD(14,4), POS(236), PD(14,4), CH(4),         ~
+                POS(264), PD(14,4), POS(323), CH(9), POS(341), CH(3),    ~
+                CH(6), CH(6), PD(14,4), POS(400), CH(8)
+            call "GLFMT" (expense_acct$)
+            call "DESCRIBE" (#3, vencode$, vendname$, 0%, f1%(3%))
+
+            reprint% = 0%
+
+         /*  Key To Read RCVLINES FILE  */
+            init (hex(00)) rkey$
+            rkey$ = str(recvrec$(),26,44)
+            init (hex(00)) str(rkey$,45)
+
+            /* Get Old RCVLINES INFO  */
+                /* And To See If Record Already Exists - i.e. reprint */
+            mat oldqty = zer : ostuom, orecd, oqtyrmain = 0
+            ovenuom$, ostoreno$, ostorlot$, oscpstore$, oscplot$,        ~
+                orejcode$, ojobno$ = " "
+
+            call "PLOWNEXT" (#38, rkey$,44%, f1%(38))
+            if f1%(38) = 0% then L19400
+            reprint% = 1%
+                get #38, using L18800, oldqty(), ostuom, ovenuom$, orecd, ~
+                   ostoreno$, ostorlot$, oscpstore$, oscplot$, orejcode$,~
+                   oqtyrmain, ojobno$
+
+L18800:         FMT POS(156), 7*PD(14,4), POS(236), PD(14,4), CH(4),     ~
+                    POS(264), PD(14,4), POS(332), CH(3), CH(6), CH(3),   ~
+                    CH(6), CH(6), PD(14,4), POS(400), CH(8)
+
+L19400:   /* READ VBKLINES FOR P.O. LINE INFORMATION */
+            porcvtd = 0
+/*EWD001*/  po_ln$, partdesc$, venpart$, delvr$, reqstd$, buyer$ = " "
+
+            init (hex(00)) readkey$
+            readkey$ = str(recvrec$(),42,28)
+            call "READ100" (#5,readkey$,f1%(5))
+            if f1%(5) = 0% then nxtrcvt2 /* Next RCVTIF2 Record */
+
+/*EWD001*/  get #5, using L20200, po_ln$, partdesc$, porcvtd, venpart$,   ~
+                                 delvr$, reqstd$, buyer$
+L20200:     FMT POS(29), CH(3), POS(57), CH(32), POS(101), PD(14,4),      ~
+/*EWD001*/      POS(197), CH(25), POS(313), CH(20), CH(20), POS(370), CH(3)
+
+            /* Hnymastr File */
+            stuom$ = " "
+            call "READ100" (#6, part$,f1%(6))
+            if f1%(6) = 0% then varhead$ = "Non Stocked Part"
+            if f1%(6) = 0% then L21500 /* Non Stocked Part */
+
+            varhead$ = "Part"
+
+            get #6, using L21200, stuom$
+L21200:     FMT POS(74), CH(4)
+L21500:
+
+            rcvkey$ =  str(recvrec$(),26,44) & str(recvrec$(),,25)
+            init (hex(00)) str(rcvkey$,70)
+
+
+        nxthnytf
+            storeno$, storlot$ = " "
+            qtyin = 0
+            call "PLOWNEXT" (#7,rcvkey$,69%,f1%(7))
+            if f1%(7) = 1% then L23000
+                /* Not distributed to inventory, so see if any tickets */
+                /* to print (e.g. To QC).                              */
+                gosub prnttkt
+                goto nxtrcvt2
+
+L23000:     get #7 using L23100, storeno$, storlot$, qtyin
+L23100:        FMT POS(70), CH(3), CH(6), POS(87), PD(14,4)
+
+            /* GET ON HAND INVENTORY QTY FROM HNYQUAN */
+            binloc$ = " "
+            qhand = 0
+
+            plowkey$= str(part$,,25) & str(storeno$,,3) & str(storlot$,,6)
+            call "READ100" (#32,plowkey$,f1%(32))
+            if f1%(32) = 0% then L25810
+
+            get #32, using L24100, binloc$, qhand
+L24100:     FMT POS(61), CH(8), POS(69), PD(14,4)
+
+            /* GET SCRAP QTY IN DEST. SCRAP STORE - LOT */
+
+            if scpstore$ <> " " then chkscrap else L25810
+        chkscrap
+            scpbinloc$ = " "
+            qhandscp = 0
+            plowkey$ = str(part$,,25) & str(scpstore$,,3)
+            str(plowkey$,29) = str(scplot$,,6)
+            str(plowkey$,35) = str(pad$,,10)
+            call "READ100" (#32,plowkey$,f1%(32))
+            if f1%(32) = 0% then L25810
+
+            get #32 using L25300, scpbinloc$, qhandscp
+L25300:     FMT POS(61), CH(8), POS(69), PD(14,4)
+
+L25810:     gosub prnttkt
+            gosub invtkt
+            goto nxthnytf
+
+
+
+          prnttkt
+          init (" ") prntamt$(),oprntamt$(),recvtd$,qtyrmain$,orecvtd$,  ~
+            oqtyrmain$,ostuom$,porcvtd$,qhand$,qhandscp$,qtyin$, measr$
+
+            if reprint% = 0% then porcvtd = recvd
+
+            for i% = 1% to 7%
+            call "CONVERT" (newqty(i%),2.2,prntamt$(i%))
+            next i%
+
+            call "CONVERT" (recvd,2.2,recvtd$)
+            call "CONVERT" (qtyrmain,2.2,qtyrmain$)
+            call "CONVERT" (stuom,2.2,measr$)
+            call "CONVERT" (qhand,2.2,qhand$)
+            call "CONVERT" (qhandscp,2.2,qhandscp$)
+            call "CONVERT" (qtyin,2.2,qtyin$)
+
+            if reprint% <> 1% then L29600
+            stat$ = "Re-print"
+            for i% = 1% to 7%
+            call "CONVERT" (oldqty(i%),2.2,oprntamt$(i%))
+            next i%
+
+            call "CONVERT" (orecd,2.2,orecvtd$)
+            call "CONVERT" (oqtyrmain,2.2,oqtyrmain$)
+            call "CONVERT" (ostuom,2.2,ostuom$)
+            goto L29700
+
+L29600:   stat$ = "Original"
+L29700:   call "CONVERT" (porcvtd,2.2,porcvtd$)
+
+            gosub rcvhtkt  /* Recvr Hold Ticket */
+            gosub qctkt    /* QC Ticket */
+            gosub qchldtkt /* QC HOLD TICKET */
+            gosub rejtkt  /*  Rejected, meaning sent back to Vendor */
+            gosub scrtkt  /*  Accepted into Scrap/Rework status */
+            mat newqty = zer
+/*EWD001*/  last_rcvr$ = recever$       /* Just for safety... */
+            return
+
+
+          rcvhtkt   /* Ticket for Items Moved To Receiver Hold */
+            if newqty(2) <> 0 then L31500
+            return
+L31500:     ticket$ = "Receiver Hold"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,prntamt$(2),porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$,recever$,jobno$,reqstd$,       ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+/*EWD001*/  print using L46100, " "," "," "," ",delvr$,vencode$,measr$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46900
+            print using L47210
+            print using L44100
+            print skip (fill%)
+
+            return
+
+
+          qctkt   /* Ticket for Items Moved To Quality Control */
+            if newqty(3) <> 0 then L33500
+            return
+L33500:     ticket$ = "QC In Process"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,prntamt$(3),porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$,recever$,jobno$,reqstd$,       ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+/*EWD001*/  print using L46100, " "," "," "," ",delvr$,measr$,vencode$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46900
+            print using L47210
+            print using L44100
+            print skip (fill%)
+
+            return
+
+          qchldtkt  /* Ticket for Items Moved To Q. C. Hold  */
+            if newqty(4) <> 0 then L35500
+            return
+L35500:     ticket$ = "QC Hold"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,prntamt$(4),porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$,recever$,jobno$, reqstd$,      ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+/*EWD001*/  print using L46100, " "," "," "," ",delvr$,measr$,vencode$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46900
+            print using L47210
+            print using L44100
+            print skip (fill%)
+
+            return
+
+          rejtkt   /* Ticket for Items REJECTED, send back to Vendor  */
+            if newqty(6) <> 0 then L37400
+            return
+L37400:     ticket$ = "Rejected"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,prntamt$(6),porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$,recever$,jobno$,reqstd$,       ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+/*EWD001*/  print using L46100, " "," "," "," ",delvr$,measr$,vencode$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46500
+            print using L46700, rejcode$
+            print using L44100
+            print skip (fill%)
+
+            return
+
+          scrtkt   /* Ticket for Items TO REWORK OR SCRAP */
+            if newqty(5) <> 0 then L39300
+            return
+L39300:     ticket$ = "Scrap/Rework"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,prntamt$(5),porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$,recever$,jobno$,reqstd$,       ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+            print using L46100, scpstore$, scplot$, scpbinloc$, qhandscp$,~
+/*EWD001*/                     delvr$, vencode$, measr$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46900
+            print using L47210
+            print using L44100
+            print skip (fill%)
+
+            return
+
+          invtkt   /* Ticket for Items MOVED TO INVENTORY */
+            if qtyin <> 0 then L41900
+            return
+L41900:     ticket$ = "Inventory"
+/*EWD001*/  gosub check_for_rcvr
+/*EWD001*/  gosub check_for_max
+            print using L44100
+            print using L44300,ticket$,stat$,date$
+            print using L44500
+            print using L44700,varhead$,venpart$
+            print using L44900,part$,partdesc$,qtyin$,porcvtd$
+            print using L45100
+/*EWD001*/  print using L45300, po_ln$
+/*EWD001*/  print using L45500, ponumber$, recever$, jobno$, reqstd$,    ~
+/*EWD001*/      userid$, buyer$
+            print using L45700
+            print using L45900, stuom$
+            print using L46100,storeno$,storlot$,binloc$,qhand$,delvr$,   ~
+/*EWD001*/      vencode$, measr$
+            print using L46300
+            gosub print_added_info_if_room
+            print using L46900
+            print using L47210
+            print using L44100
+            print skip (fill%)
+
+            return
+
+        print_added_info_if_room
+            if org_fill% < 3% then return         /* No Room at the Inn */
+            if print_extra$ = "N" then return /*Future Flag-not Implmted*/
+                fill% = org_fill% - 2%
+                print using L47240, vendname$, expense_acct$
+                print using L47270
+            return
+
+
+        check_for_rcvr                          /* New - EWD001 */
+*           return             /* Remove '*' if real rcvr tkts are used */
+            if recever$ = last_rcvr$ then return
+            print page
+            tkt_cnt% = 0%
+            last_rcvr$ = recever$
+            return
+        
+        check_for_max                           /* New - EWD001 */
+*           return             /* Remove '*' if real rcvr tkts are used */
+            tkt_cnt% = tkt_cnt% + 1%
+            if tkt_cnt% <= 3% then return
+            print page
+            tkt_cnt% = 1%
+            return
+
+
+        REM ******************  IMAGE STATEMENTS  ***********************
+L44100: % +--------------------------------------------------------------~
+        ~------------------+
+L44300: % !      ################   RECEIVER DISTRIBUTION TICKET- #######~
+        ~#  ########       !
+L44500: % +--------------------------+-------------------------------+---~
+        ~-------+----------+
+L44700: % ! #########################!   #########################   ! Qu~
+        ~antity !Prior Rec !
+L44900: % ! #########################!###############################!###~
+        ~#######!##########!
+L45100: % +-----------------+----------------+--------+--------------+---~
+        ~-----+------------!
+L45300: % ! P.O. No. ! ###  !Receiver No.    !Job No. !Requisitioner !Rec~
+        ~vd By!   Buyer    !
+L45500: % ! ################!################!########!##############!  #~
+        ~##   !    ###     !
+L45700: % +-------+-------+---------+-------------+------------+-----+---~
+        ~+-----------------!
+L45900: % ! Store ! Lot   !Prime Bin! On Hand Qty ! Deliver To !Vendor Cd~
+        ~! Stock UOM: #### !
+L46100: % ! ###   !###### !######## ! ##########  ! ###########!#########~
+        ~!##########/VenUOM!
+L46300: % +-------+-------+---------+-------------+------------+---------~
+        ~------------------+
+L46500: % ! Reason        !   Comments / Special Instructions            ~
+        ~                  !
+L46700: % ! ##########    !                                              ~
+        ~                  !
+L46900: % ! Special Instructions / Comments                              ~
+        ~                  !
+        % +-------+-------+---------+-------------+----------------------~
+        ~------------------+
+
+L47210: % !                                                              ~
+        ~                  !
+
+L47240: % ! Vendor Name : #############################      ! Expense Ac~
+        ~ct: ############  !
+
+L47270: % +--------------------------------------------------+-----------~
+        ~------------------+
+
+        REM ***********          EXIT PROGRAM        ******************
+
+L47500:  if found% <> 0% then L47800
+            call "SHOSTAT" ("No Tickets Printed")
+            goto L47900
+L47800:  call "SHOSTAT" ("Tickets Printed")
+L47900:    close printer
+           call "SETPRNT" (rptid$," ",0%,1%)
+           end
+
+

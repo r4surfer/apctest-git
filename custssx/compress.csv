@@ -1,0 +1,151 @@
+/*
+ compress: APR 27 11:27:34 1998
+ */
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+#ifdef COMPRESS
+#undef COMPRESS
+#endif
+COMPRESS (INPUTS_TS, ILEN_IS, OUTPUTS_TS, OLEN_IS, CODE_IS)
+struct symbol *INPUTS_TS;
+struct symbol *ILEN_IS;
+struct symbol *OUTPUTS_TS;
+struct symbol *OLEN_IS;
+struct symbol *CODE_IS;
+{
+
+#include "compress.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static long TMP_is;
+static struct symbol TMP_IS ={(long)(4),(char *)&TMP_is, 4,0,0,0,4,4};
+static char TEMPS_ts[255];
+static struct symbol TEMPS_TS ={(long) 1, (char *)  TEMPS_ts, 255, 0, 0, 0, 255, 255};
+static struct symbol *allvar[]={
+&TEMPS_TS,
+&TMP_IS,
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+static int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ILEN_is;
+	long *OLEN_is;
+	long *CODE_is;
+
+int i,j,k;
+int ilen;
+int x;
+unsigned int temp;
+char tempStr[64];
+char entStr[5];
+char *tempPtr;
+
+char *parse;
+char *outparse;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 2) && (ILEN_IS != NULL))
+		ILEN_is = (long *) *( (long *) ILEN_IS + 1);
+	if ((Call_args >= 4) && (OLEN_IS != NULL))
+		OLEN_is = (long *) *( (long *) OLEN_IS + 1);
+	if ((Call_args >= 5) && (CODE_IS != NULL))
+		CODE_is = (long *) *( (long *) CODE_IS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+
+	(TMP_is)=*(ILEN_is);
+	x=TMP_is;
+	str_asgn ((char *)(INPUTS_TS->p), (long)  x, TEMPS_ts, (long) 255 );
+	parse = TEMPS_ts;
+
+	outparse =(char *)&temp;
+	j=262144;
+	k=0;
+	temp=0;
+	for(i=0; i<40; i++)
+	{
+	
+                if (parse[i]==32)
+		{
+			temp+=j;
+		}
+		else if (parse[i]>47&&parse[i]<58) /* numbers */
+		{
+			temp+=(parse[i]-46)*j;
+		}
+		else if (parse[i]>64&&parse[i]<91) /* A-Z */
+		{
+			temp+=(parse[i]-53)*j;
+		}
+		else if (parse[i]>96&&parse[i]<123) /* a-z */
+		{
+			temp+=(parse[i]-59)*j;
+		}
+		else
+		{
+			temp+=j;
+		}
+
+		if (j==1) j=0;
+		else j/=64;
+		if (j==0)
+		{
+			j=262144;
+			TEMPS_ts[k+2]=*(outparse+3);
+			TEMPS_ts[k+1]=*(outparse+2);
+			TEMPS_ts[k]=*(outparse+1);
+			k+=3;
+			temp=0;
+		}
+	}
+
+
+	TEMPS_ts[k]=0; 
+	str_asgn (TEMPS_ts, (long) 255 ,(char *)(OUTPUTS_TS->p), (long)k);
+	*(OLEN_is) = k; 
+/* 000010 */
+	g_exp0[0] = 0L;
+	g_exp0[1] = 0L;
+	BCD_l (g_exp0, &g_ind0);
+	/* BCD temp will be reused */
+	*(CODE_is) =  g_ind0;
+/* 000011 */
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF compress */
+

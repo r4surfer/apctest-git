@@ -1,0 +1,5 @@
+	$(COMPILE) ./$@
+	$(CC) $(CFLAGSC) $(INC_FLAGS) ./$@.c
+	mv ./$@.o $(OBJ)/$@.o
+	rm -f ./$@.?
+

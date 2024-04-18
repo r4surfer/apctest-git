@@ -1,0 +1,252 @@
+        REM *************************************************************~
+            *                                                           *~
+            *  Program Name      - APCPLN0B                             *~
+            *  Creation Date     - 01/02/97                             *~
+            *  Last Modified Date- 12/10/01                             *~
+            *  Description       - This Subroutine Always Calculates    *~
+            *                      the Current Production Year, Week,   *~
+            *                      and Day. The Routine will also       *~
+            *                      Validate the Entered Year, Week, and *~
+            *                      optional Day. Formatted and          *~
+            *                      unformatted dates are returned for   *~
+            *                      both, also Prior year Valus.         *~
+            *  Special Comments  -                                      *~
+            *                                                           *~
+            *-----------------------------------------------------------*~
+            *                  M O D I F I C A T I O N S                *~
+            *---WHEN---+----------------WHAT----------------------+-WHO-*~
+            * 01/16/96 ! New Program for (APC) - Last Mod Date    ! RHH *~
+            * 11/13/97 ! Mod for Upgrade to new Release R6.04.03  ! RHH *~
+            * 03/08/98 ! Y2K Changes                              ! LDJ *~
+            * 11/01/99 ! (EWD001) Mod to Fix Bug with Date        ! CMG *~
+            * 12/10/01 ! (EWD002) Mod to fix Weeks in 2002.       ! CMG *~
+            *************************************************************
+
+            sub "APCPLN0B" ( cur_yr$,    /* Current Production Year    */~
+                             cur_wk$,    /* Current Production Week    */~
+                             cur_dy$,    /* Current Production Day     */~
+                             cur_dte$,   /* Current Production Date(6) */~
+                             cur_date$,  /* Current Production Date(8) */~
+                             ent_yr$,    /* Entry Production Year (IN) */~
+                             ent_wk$,    /* Entry Prod Week       (IN) */~
+                             ent_dy$,    /* Entry Production Day (OPT) */~
+                             ent_dte$,   /* Entry Production Date (6)  */~
+                             ent_date$,  /* Entry Production Date *8)  */~
+                             prv_yr$,    /* Previous Year              */~
+                             pl_e%    )  /* 0% = Ok, Not Zero error    */
+
+        dim                              /* Subroutine - Variables     */~
+            date$8,                      /*                            */~
+            x$8, current$8,              /* System Date                      (Y2K, LDJ) */~
+            dy$(7%)9,  dy$9,             /* Days and Day of Week       */~
+            adj_dte$8, adj_dy$9,         /* Adjustment Date/ Day             (Y2K, LDJ) */~
+            prv_yr$2,  cur_yr$2,         /* Previous / Current Year    */~
+            cur_wk$2,  cur_dy$1,         /* Current Prod. Week an Day  */~
+            cur_dte$6, cur_date$8,       /* Prod Week Date Form/Unform */~
+            jdate$7,   ent_yr$2,         /* Julian Year and Day YYYYDDD      (Y2K, LDJ) */~
+            ent_wk$2,  ent_dy$1,         /* Entry Prod. Week an Day    */~
+            ent_dte$6, ent_date$8        /* Prod Week Date Form/Unform */
+
+        dim adj_yr$(10%)4,               /* Adjustment Years   (EWD002)*/~
+            adj_yr$4, nxt_yr$4           /* Adjustment Year            */
+
+            dy$(1%) = "MONDAY   " : dy$(5%) = "FRIDAY   "
+            dy$(2%) = "TUESDAY  " : dy$(6%) = "SATURDAY "
+            dy$(3%) = "WEDNESDAY" : dy$(7%) = "SUNDAY   "
+            dy$(4%) = "THURSDAY "
+            adj_yr$(1%) = "2002"   : adj_yr$(2%) = "2003"      /* (EWD002)*/
+            adj_yr$(3%) = "    "   : adj_yr$(4%) = "    "
+            adj_yr$(5%) = "    "   : adj_yr$(6%) = "    "
+            adj_yr$(7%) = "    "   : adj_yr$(8%) = "    "
+            adj_yr$(9%) = "    "   : adj_yr$(10%) = "    "
+            pl_e% = 0% : sav_j1% = 0%             /* Init Error Flag   */
+            j1%   = 0%                            /* Store Julian Day  */
+            adj_yr% = 0% : nxt_yr% = 0%           /* Adj Year  (EWD002)*/
+        REM - Calculate Current Production Year, Week, Day (Always )
+          date$ = date : x% = 0%                  /* Calc Current Year */       /* (Y2K, LDJ) */
+        REM
+        REM   X$ = "980115"                       /* TEST DATE         */
+        REM
+
+                                                                                /* (Y2K, LDJ) */
+          call "DATEFMT" (date$,leap%,x$)                                       /* (Y2K, LDJ) */
+          leap%    = 0%
+          current$ = x$                           /* Save Current Date */
+          x$ = date                                                             /* (Y2K, LDJ) */
+          leap_yr% = 365%
+*       RHH
+          convert str(current$,1%,4%) to x%, data goto L00700                   /* (Y2K, LDJ) */
+L00700:
+          yy% = x%                                /* Save Integer of   */
+          cur_yr$ = bin(yy%,2)                    /* Save Current Year */       /* (Y2K, LDJ) */
+          nxt_yr$ = bin((yy% + 1%),2)
+          convert val(nxt_yr$,2) to nxt_yr$, pic(0000)
+          if mod(yy%,4%) = 0 then leap_yr% = 366% /* LEAP YEAR         */
+          x% = x% - 1%
+          prv_yr$ = bin(x%,2)                     /* Save Previous Year*/       /* (Y2K, LDJ) */
+
+          if ent_yr$ <> " " then                                       ~
+              convert val(ent_yr$,2) to adj_yr$, pic(0000)             ~
+          else                                                         ~
+              convert val(cur_yr$,2) to adj_yr$, pic(0000)
+
+          for i% = 1% to 10%                      /* Adj Year (EWD002) */
+              if adj_yr$ = adj_yr$(i%) then adj_yr% = 1%
+          next i%
+
+        REM Calc Cur Production Week         CUR_WK$, CUR_DY$, CUR_DATE$
+            u3% = 0%
+            gosub calc_adjustment
+                                                  /* Convert Curr Date */
+            u3% = 0%                              /* to Julian - JDATE$*/
+            call "DATE" addr("GJ", str(x$,,6%), str(jdate$,,5%), u3%)       /* Julian Day*/     /* (Y2K, LDJ) */
+            call "DATJULCV" (jdate$)                                            /* (Y2K, LDJ) */
+            convert str(jdate$,5%,3%) to j1%, data goto L00820
+L00820:
+        re_calc
+            zz% = j1% + adj%                          /* ADJUSTMENT   */
+            wk% = (zz%/ 7%)                           /* Calc Current */
+            if wk% = 0% then wk% = 1%
+            if adj_yr% = 1% then wk% = wk% + 1%       /*  (EWD002)    */
+            for i% = 1% to 10%                        /*  (EWD002)    */
+                if nxt_yr$ = adj_yr$(i%) then nxt_yr% = 1%
+            next i%
+
+        REM if leap_yr% = 366% then wk% = wk% + 1%    /* (EWD001)     */
+
+            convert wk% to cur_wk$, pic(##)            /*Curr Prod Week*/
+            call "DATE" addr("GD", str(x$,,6%), dy$, u3%) /* Calc Current */        /* (Y2K, LDJ) */
+            for i% = 1% to 7%                          /* Prod. Day    */
+                if dy$ = dy$(i%) then goto L00940
+            next i%
+L00940:     convert i% to cur_dy$, pic(#)              /*Curr Prod Day */
+						      /*  (EWD002)     */
+          if leap% = 1% and adj_yr% <> 1% then goto L01020
+            j1% = (wk% * 7%)                          /* Curr Prod Week*/
+            if nxt_yr% <> 1% and adj_yr% <> 1%        /*  (EWD002) BEG */  ~
+                                        then goto L00950
+               if nxt_yr% <> 1% then goto L00970
+                  if wk% > 1%  and wk% < 53% then  goto L00970
+                    j1% = 365%
+                    wk% = 1%   
+                    yy% = yy% + 1%                       /* Current Year Next*/
+                    cur_yr$ = bin(yy%,2)
+                    convert wk% to cur_wk$, pic(##)            /*Curr Prod Week*/
+                    goto L00950
+
+L00970:      if adj_yr% = 1% then j1% = j1% - 7%      /*  (EWD002) END */
+               
+
+L00950:     if leap% = 1% then j1% = sav_j1%
+        REM STR(JDATE$,1%,2%) = STR(X$,1%,2%)         /* Start Date    */
+            convert j1% to str(jdate$,5%,3%), pic(000) /* for Monday   */       /* (Y2K, LDJ) */
+            
+L01020:     call "DATJULCV" (jdate$)                                            /* (Y2K, LDJ) */
+            call "DATE" addr("JG", str(jdate$,,5%), str(cur_dte$,,6%),u3%)      /* (Y2K, LDJ) */
+            call "DATE" addr("GD", str(cur_dte$,,6%), dy$,u3%)                  /* (Y2K, LDJ) */
+            for i% = 1% to 7%
+                if dy$ = dy$(i%) then goto L01070         /* Curr Prod   */
+            next i%                                     /* Day         */
+L01070:     j1% = j1% - (i% - 1%)
+            call "DATJULCV" (jdate$)                                            /* (Y2K, LDJ) */
+            convert j1% to str(jdate$,5%,3%), pic(000)  /* Monday Date */       /* (Y2K, LDJ) */
+            call "DATJULCV" (jdate$)                                            /* (Y2K, LDJ) */
+            call "DATE" addr("JG", str(jdate$,,5%), str(cur_dte$,,6%),u3%) /* Current Week*/  /* (Y2K, LDJ) */
+            cur_date$ = cur_dte$                        /* Unformatted */
+            call "DATJULCV" (jdate$)                                            /* (Y2K, LDJ) */
+            if date >= cur_dte$ then goto L01230                                /* (Y2K, LDJ) */
+               leap% = 1%
+               yy% = x%                            /* Current Year Prev*/
+               cur_yr$ = prv_yr$                   /* are the Same     */
+               if mod(x%,4%) = 0 then leap_yr% = 366% /* LEAP YEAR     */
+        REM    j1% = leap_yr% - (7% - j1%)
+               j1% = leap_yr% + (7% - j1%)         /* (EWD001)         */
+               sav_j1% = j1%
+               convert val(cur_yr$,2) to str(jdate$,1%,4%),pic(0000)            /* (Y2K, LDJ) */
+               convert j1% to str(jdate$,5%,3%), pic(000)                       /* (Y2K, LDJ) */
+
+               goto re_calc
+
+L01230:    if len(str(cur_date$)) = 10% then                                    /* (Y2K, LDJ) */~
+              call "DATFMTC" (cur_date$)                                        /* (Y2K, LDJ) */~
+           else                                                                 /* (Y2K, LDJ) */~
+              call "DATEFMT" (cur_date$)                /* Formatted   */       /* (Y2K, LDJ) */
+        REM Check Entry for Production Year, Week, or Day to (Validate)
+           if ent_yr$ <> " " then goto L01270
+              ent_yr$ = cur_yr$                         /* Entry Year  */
+L01270:    if ent_wk$ <> " " then goto L01290
+              ent_wk$ = cur_wk$                         /* Entry Week  */
+L01290:    if ent_dy$ <> " " then goto L01310
+              ent_dy$ = cur_dy$                         /* Entry Day   */
+L01310:    convert ent_wk$ to x%, data goto exit_err1
+
+           convert ent_dy$ to y%, data goto exit_err2
+
+           yy% = val(ent_yr$,2)                                                 /* (Y2K, LDJ) */
+
+           if ent_yr$ <> cur_yr$ then leap% = 0%
+
+           if ent_wk$ <> cur_wk$ then leap% = 0%
+
+           if adj_yr% = 1% or nxt_yr% = 1% then leap% = 0%
+                                                        /* Edit Entry  */
+           if x% < 1% or x% > 53% then goto exit_err1   /* Week        */
+           if y% < 1% or y% >  7% then goto exit_err2   /* Year        */
+           if x% = 53% and mod(yy%,4%) <> 0% then goto exit_err1 /*LEAP*/
+           convert x% to ent_wk$, pic(##)            /*Entry Prod Week */
+           j1% = (x% * 7%)                           /* Calc Entry Prod*/
+           if x% = 53% then j1% = 365%               /* FOR '96'       */ 
+           if nxt_yr% = 1% and x% = 1% then j1% = 365%      /* (EWD002)*/
+           if adj_yr% = 1% and x% = 1% then j1% = 365%      /* (EWD002)*/
+           if adj_yr% = 1% and x% <> 1% then j1% = j1% - 7  /* (EWD002)*/
+
+           if leap% = 1% then j1% = sav_j1%
+REM           convert val(ent_yr$,2) to str(jdate$,1%,4%),pic(0000) /* Date for Monday*/  /* (Y2K, LDJ) */
+           adj_ent_yr% = 0%                          /*  (EWD002) - Next 3 stmts */
+           adj_ent_yr% = val(ent_yr$,2)
+           if (adj_yr% = 1% or nxt_yr% = 1%) and x% = 1% then          /*  (EWD002)   */    ~
+                          adj_ent_yr% = adj_ent_yr% - 1%
+
+           convert adj_ent_yr% to str(jdate$,1%,4%),pic(0000) /* Date for Monday*/  /* (Y2K, LDJ) */
+           convert j1% to str(jdate$,5%,3%), pic(000)                           /* (Y2K, LDJ) */
+           call "DATJULCV" (jdate$)                                             /* (Y2K, LDJ) */
+           call "DATE" addr("JG", str(jdate$,,5%), ent_dte$,u3%)                /* (Y2K, LDJ) */
+           call "DATE" addr("GD", ent_dte$, dy$,u3%)
+           for i% = 1% to 7%
+                if dy$ = dy$(i%) then goto L01550
+           next i%
+L01550:    j1% = j1% - (i% - 1%)
+           call "DATJULCV" (jdate$)                                             /* (Y2K, LDJ) */
+           convert j1% to str(jdate$,5%,3%), pic(000)                           /* (Y2K, LDJ) */
+           call "DATJULCV" (jdate$)                                             /* (Y2K, LDJ) */
+           call "DATE" addr("JG", str(jdate$,,5%), ent_dte$,u3%)                /* (Y2K, LDJ) */
+           ent_date$ = ent_dte$                    /* Date Unformatted */
+           if len(str(ent_date$)) = 10% then                                    /* (Y2K, LDJ) */~
+              call "DATFMTC" (ent_date$)                                        /* (Y2K, LDJ) */~
+           else                                                                 /* (Y2K, LDJ) */~
+              call "DATEFMT" (ent_date$)           /* Date Formatted   */
+           goto exit_sub
+
+        exit_err1 : pl_e% = 1% : goto exit_sub   /* Invalid Entry Week */
+
+        exit_err2 : pl_e% = 2% : goto exit_sub   /* Invalid Entry Day  */
+
+        exit_sub
+
+        end
+
+        calc_adjustment
+           convert val(cur_yr$,2) to str(adj_dte$,,4%),pic(0000)                /* (Y2K, LDJ) */
+           str(adj_dte$,5%) = "0101"             /* 1st Day of the Yr */        /* (Y2K, LDJ) */
+           call "DATECONV" (adj_dte$)                                           /* (Y2K, LDJ) */
+           call "DATE" addr("GD", str(adj_dte$,,6%), adj_dy$, u3%)              /* (Y2K, LDJ) */
+           for i% = 1% to 7%                     /* Find the Day of   */
+               if adj_dy$ = dy$(i%) then goto L01760 /*week Assoc. with */
+           next i%                               /* the 1st Day       */
+L01760:    adj% = i%                             /* 1 thru 7 Day Value*/
+
+           if adj% = 1% then goto L01800
+              adj% = (8% - adj%) + 1%
+L01800:    adj% = (7% - adj%)
+        return
+

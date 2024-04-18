@@ -1,0 +1,107 @@
+/*
+ error: Wed Apr 17 12:06:12 2002
+ */
+
+/* include for Oracle Call Interface - we are using 8.0+ format */
+#include <oci.h>
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+extern OCIError *errhp;
+
+ERROR (ERR_TS)
+struct symbol *ERR_TS;
+{
+
+#include "error.h"
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static struct symbol *allvar[]={
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+       int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+//buffer
+  text errbuf[512];
+  text errbufsh[256];
+  sb4 errcode = 0;
+  int errbuflen = 0;
+/* local BCD & int pointers to callers parms */
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001        REM *************************************************************~*/ 
+/* 000002            *                                                           *~*/ 
+/* 000003            *                                                           *~*/ 
+/* 000004            *                                                           *~*/ 
+/* 000005            *                                                           *~*/ 
+/* 000006            *                                                           *~*/ 
+/* 000007            *                                                           *~*/ 
+/* 000008            *                                                           *~*/ 
+/* 000009            *-----------------------------------------------------------*~*/ 
+/* 000010            * ERROR - Return the Oracle OCI Error String.               *~*/ 
+/* 000011            *                                                           *~*/ 
+/* 000012            *                                                           *~*/ 
+/* 000013            *                                                           *~*/ 
+/* 000014            *-----------------------------------------------------------*~*/ 
+/* 000015            *                  M O D I F I C A T I O N S                *~*/ 
+/* 000016            *---WHEN---+----------------WHAT----------------------+-WHO-*~*/ 
+/* 000017            * 04/02/02 ! Original                                 ! CMG *~*/ 
+/* 000018            **************************************************************/ 
+/* 000019*/ 
+/* 000020            sub  "ERROR"    ( err$)           :: Actual String Field ::*/ 
+/* 000021                              */ 
+/* 000022*/ 
+/* 000023            dim err$256                       :: Actual String Field ::*/ 
+/* 000024*/ 
+/* 000025*/ 
+
+	(void) OCIErrorGet((dvoid *)errhp, (ub4) 1, (text *) NULL, &errcode,
+                        errbuf, (ub4) sizeof(errbuf), OCI_HTYPE_ERROR);
+	errbuflen=strlen(errbuf);
+	if (errbuflen>250) 
+	{	
+		errbuflen=250; 
+	}
+	strncpy( errbufsh, errbuf, errbuflen );
+	str_asgn ((char *)errbufsh, (long) strlen((char *)errbufsh) , 
+		(char *)(ERR_TS->p), (long)(ERR_TS->len));
+/* 000026            end*/ 
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF error */
+

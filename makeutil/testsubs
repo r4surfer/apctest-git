@@ -1,0 +1,127 @@
+#!/usr/bin/csh
+# Routine test consistency of subroutine lists & libraries
+#
+
+set resp = 99
+while ($resp == 99)
+	echo '                 CAELUS CMS Subroutine list/library compare'
+	echo ' '
+	echo ' '
+	echo 'Select Library Type:'
+	echo '  1.subsrce2'
+	echo '  2.subsrce3'
+	echo '  3.subsrcr2'
+	echo '  4.subsrcr3'
+	echo '  5.Exit'
+	echo ' '
+	set resp = $<
+# the following if statement must be a single line 
+	if (($resp < 1) || ($resp > 5)) then
+		set resp = 99
+	endif
+end
+
+if ($resp == 5) then
+	exit
+endif
+
+set resp1 = 99
+while ($resp1 == 99)
+	echo ' '
+	echo 'Select Comparison Type:'
+	echo '  1.makeutil/lists - .bas'
+	echo '  2.makeutil/lists - .o'
+	echo '  3..bas - .o'
+	echo '  4.Exit'
+	echo ' '
+	set resp1 = $<
+# the following if statement must be a single line 
+	if (($resp1 < 1) || ($resp1 > 4)) then
+		set resp1 = 99
+	endif
+end
+
+if ($resp1 == 4) then
+	exit
+endif
+
+if ($resp == 1) then
+	set fset = "subsrce2"
+endif
+
+if ($resp == 2) then
+	set fset = "subsrce3"
+endif
+
+if ($resp == 3) then
+	set fset = "subsrcr2"
+endif
+
+if ($resp == 4) then
+	set fset = "subsrcr3"
+endif
+
+if ($resp1 == 1) then
+
+	echo '   /makeutil/'$fset > ./tmpdiff0
+	ls ./$fset > ./tmpdiffx
+	foreach file (`cat ./tmpdiffx`)
+		cut -d. -f1 ./$fset/$file >> ./tmpdiff0
+	end
+	sort ./tmpdiff0 > ./diff1.txt
+
+	echo '   '$fset > ./diff2.txt
+	ls ../$fset/*.bas > ./tmpdiff1
+	cut -d/ -f3 ./tmpdiff1 > ./tmpdiff2
+	cut -d. -f1 ./tmpdiff2 >> ./diff2.txt
+
+	rm ./tmpdiff?
+	diff ./diff1.txt ./diff2.txt
+endif
+
+if ($resp1 == 2) then
+
+	echo '   /makeutil/'$fset > ./tmpdiff0
+	ls ./$fset > ./tmpdiffx
+	foreach file (`cat ./tmpdiffx`)
+		cut -d. -f1 ./$fset/$file >> ./tmpdiff0
+	end
+	sort ./tmpdiff0 > ./diff1.txt
+
+	echo '   '$fset'_o' > ./diff2.txt
+	ls ../$fset'_o'/*.o > ./tmpdiff3
+	cut -d/ -f3 ./tmpdiff3 > ./tmpdiff4
+	cut -d. -f1 ./tmpdiff4 >> ./diff2.txt
+
+	rm ./tmpdiff?
+	diff ./diff1.txt ./diff2.txt
+endif
+
+if ($resp1 == 3) then
+
+	echo '   '$fset > ./diff1.txt
+	ls ../$fset/*.bas > ./tmpdiff0
+	cut -d/ -f3 ./tmpdiff0 > ./tmpdiff1
+	cut -d. -f1 ./tmpdiff1 >> ./diff1.txt
+
+	echo '   '$fset'_o' > ./diff2.txt
+	ls ../$fset'_o'/*.o > ./tmpdiff3
+	cut -d/ -f3 ./tmpdiff3 > ./tmpdiff4
+	cut -d. -f1 ./tmpdiff4 >> ./diff2.txt
+
+	rm ./tmpdiff?
+	diff ./diff1.txt ./diff2.txt
+endif
+
+echo 'Retain the files diff1.txt and diff2.txt for further analysis?'
+set resp2 = $<
+# the following if statement must be a single line
+  if  (($resp2 == "Y")  ||  ($resp2 == "y")  ||  ($resp2 == "yes")  ||                 ( $resp2 == "YES")  ||  ($resp2 == "Yes")) then
+	echo 'The files have been retained'
+	exit
+  else
+	rm -f ./diff*
+	echo 'The files have been removed'
+  endif
+
+exit

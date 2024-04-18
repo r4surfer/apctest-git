@@ -1,0 +1,13 @@
+
+LD_DIRS=-L$(CMSPATH)/load2
+LD_LIBS=$(CMS_LIB) $(M_LIB)
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas
+
+# Define the steps from .o to executable
+.o:
+	@echo  == Using .o to executable rule  ==
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)/$@
+
+all:	target	\

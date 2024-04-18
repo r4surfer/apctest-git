@@ -1,0 +1,276 @@
+#!/usr/bin/csh
+# Routine to create necessary CMS symbolic links
+#
+
+set obj2path = '/cms/currel/object2'
+if ( ! -d $obj2path ) then
+	set obj2path = ''
+endif
+
+set resp = 99
+while ($resp == 99) 
+	echo ' '
+	echo 'Create Symbolic Links - object2 path'
+	echo ' '
+	echo ' Enter full path for object2'
+	echo ' Default:'
+	if ($obj2path == '') then
+		echo '[no valid path set]'
+	else
+		echo $obj2path
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set obj2path = $opresp
+	endif
+	if ( ! -d $obj2path ) then
+		set obj2path = ''
+	else
+		set resp = 0
+	endif
+end
+
+set utilpath = '/cms/currel/utility'
+if ( ! -d $utilpath ) then
+	set utilpath = ''
+endif
+
+set resp = 99
+while ($resp == 99) 
+	echo ' '
+	echo 'Create Symbolic Links - utility path'
+	echo ' '
+	echo ' Enter full path for utility'
+	echo ' Default:'
+	if ($utilpath == '') then
+		echo '[no valid path set]'
+	else
+		echo $utilpath
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set utilpath = $opresp
+	endif
+	if ( ! -d $utilpath ) then
+		set utilpath = ''
+	else
+		set resp = 0
+	endif
+end
+
+set wisppath = '/cms/wisp/bin'
+if ( ! -d $wisppath ) then
+	set wisppath = ''
+endif
+
+set resp = 99
+while ($resp == 99) 
+	echo ' '
+	echo 'Create Symbolic Links - wisp/bin path'
+	echo ' '
+	echo ' Enter full path for wisp/bin'
+	echo ' Default:'
+	if ($wisppath == '') then
+		echo '[no valid path set]'
+	else
+		echo $wisppath
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set wisppath = $opresp
+	endif
+	if ( ! -d $wisppath ) then
+		set wisppath = ''
+	else
+		set resp = 0
+	endif
+	end
+
+set dsampath = '/cms/disam/bin'
+if ( ! -d $dsampath ) then
+	set dsampath = ''
+endif
+
+set resp = 99
+while ($resp == 99) 
+	echo ' '
+	echo 'Create Symbolic Links - disam/bin path'
+	echo ' '
+	echo ' Enter full path for disam/bin'
+	echo ' Default:'
+	if ($dsampath == '') then
+		echo '[no valid path set]'
+	else
+		echo $dsampath
+	endif
+	set opresp = $<
+	if ( ! ($opresp == '' )) then
+		set dsampath = $opresp
+	endif
+	if ( ! -d $dsampath ) then
+		set dsampath = ''
+	else
+		set resp = 0
+	endif
+	end
+
+echo ' '
+echo 'Create links for '$wisppath' ilp to unique [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	if ( -x $wisppath/unique ) then
+		if ( ! -e $wisppath/ilpman ) then
+			echo 'ilpman -> unique'
+			(ln -s $wisppath/unique $wisppath/ilpman)
+		else
+			echo 'ilpman exists'
+		endif
+	else
+		echo 'unique not found or not executable'
+	endif
+	if ( -x $wisppath/ulp ) then
+		if ( ! -e $wisppath/ilp ) then
+			echo 'ilp -> ulp'
+			(ln -s $wisppath/ulp $wisppath/ilp)
+		else
+			echo 'ilp exists'
+		endif
+	else
+		echo 'ulp not found or not executable'
+	endif
+	if ( -x $wisppath/udaemon ) then
+		if ( ! -e $wisppath/idaemon ) then
+			echo 'idaemon -> udaemon'
+			(ln -s $wisppath/udaemon $wisppath/idaemon)
+		else
+			echo 'idaemon exists'
+		endif
+	else
+		echo 'udaemon not found or not executable'
+	endif
+	if ( -x $wisppath/ushut ) then
+		if ( ! -e $wisppath/ishut ) then
+			echo 'ishut -> ushut'
+			(ln -s $wisppath/ushut $wisppath/ishut)
+		else
+			echo 'ishut exists'
+		endif
+	else
+		echo 'ushut not found or not executable'
+	endif
+else
+	echo 'no links created - bypassed '$wisppath' ilp to unique'
+endif
+
+echo ' '
+echo 'Create links from '$obj2path' to '$dsampath' [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	set templs = ls
+	$templs  $dsampath > ./tmpgenl0
+	unset templs
+	foreach file (`cat ./tmpgenl0`)
+		if ( -x $dsampath/$file ) then
+			echo $file
+			(ln -s $dsampath/$file $obj2path/$file)
+		else 
+			echo $file' not executable'
+		endif
+	end
+	rm ./tmpgenl0
+else
+	echo 'no links created - bypassed '$obj2path' to '$dsampath
+endif
+
+echo ' '
+echo 'Create links from '$utilpath' to '$dsampath' [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	set templs = ls
+	$templs  $dsampath > ./tmpgenl0
+	unset templs
+	foreach file (`cat ./tmpgenl0`)
+		if ( -x $dsampath/$file ) then
+			echo $file
+			(ln -s $dsampath/$file $utilpath/$file)
+		else 
+			echo $file' not executable'
+		endif
+	end
+	rm ./tmpgenl0
+else
+	echo 'no links created - bypassed '$utilpath' to '$dsampath
+endif
+
+echo ' '
+echo 'Create links from '$obj2path' to '$wisppath' [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	set templs = ls
+	$templs  $wisppath > ./tmpgenl0
+	unset templs
+	foreach file (`cat ./tmpgenl0`)
+		if ( -x $wisppath/$file ) then
+			echo $file
+			(ln -s $wisppath/$file $obj2path/$file)
+		else 
+			echo $file' not executable'
+		endif
+	end
+	rm ./tmpgenl0
+else
+	echo 'no links created - bypassed '$obj2path' to '$wisppath
+endif
+
+echo ' '
+echo 'Create links from '$utilpath' to '$wisppath' [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	set templs = ls
+	$templs  $wisppath > ./tmpgenl0
+	unset templs
+	foreach file (`cat ./tmpgenl0`)
+		if ( -x $wisppath/$file ) then
+			echo $file
+			(ln -s $wisppath/$file $utilpath/$file)
+		else 
+			echo $file' not executable'
+		endif
+	end
+	rm ./tmpgenl0
+else
+	echo 'no links created - bypassed '$utilpath' to '$wisppath
+endif
+
+echo ' '
+echo 'Create links from '$obj2path' to '$utilpath' [y]?'
+set opresp = $<
+
+if (($opresp == "y") || ($opresp == "Y") || ($opresp == "yes") ||                   ($opresp == "YES") || ($opresp == "Yes")) then
+	echo 'Creating links ....'
+	echo 'copy' > tmpgenl0
+	echo 'onlinewp' >> tmpgenl0
+	foreach file (`cat ./tmpgenl0`)
+		if ( -x $utilpath/$file ) then
+			echo $file
+			(ln -s $utilpath/$file $obj2path/$file)
+		else 
+			echo $file' not executable'
+		endif
+	end
+	rm ./tmpgenl0
+else
+	echo 'no links created - bypassed '$obj2path' to '$utilpath
+endif
+echo ' '
+exit

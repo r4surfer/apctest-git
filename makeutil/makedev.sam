@@ -1,0 +1,130 @@
+#	b_cgen makefile
+#
+# For use in development - should reside in development source library.
+# Assumes standard location of b_cgen, b_cgen components & CMS subs.
+# Custom subs (static linkage) may reside in development library.
+#
+# Stepped makes support bas to executable & anything in between.
+# No clean-up is performed after these makes to allow debugging
+# & more efficient development.
+# For instance, when working on a subroutine, make the driver to .o,
+# then fully make the sub each time, but only re-link the driver.
+# The .c .h .o are left behind for use in xdb, but this may require
+# strategic use of touch & remove to recompile & relink properly.
+
+# Path to normal b_cgen, its components & application subs
+
+CMS_PATH= \
+/cms2/apctest1
+
+# Set up the variables
+# although -D_HPUX_SOURCE -DULTRIX -DAIX -DALPHA 
+# is not usually need for applications,  it is a useful
+# reminder of which platform this makefile for.
+
+# Standard flags for source & static linked subs
+CFLAGS=-Ae -g -D_HPUX_SOURCE
+
+# Flags for subroutines intended for inclusion in shared library
+#CFLAGS=-Ae -g +z -D_HPUX_SOURCE
+
+# Linker macros (on AIX use LD=cc & appropriate flags[none])
+LD=ld
+LDFLAGS= +s +b : 
+
+# Extra object files for routines that MUST be explicitly loaded
+# Note: crt0.o is for HP, end.o is for xdb
+# Special extra objects is what it implies, if needed.
+
+SYS_EXT_OBJ=$(CMS_PATH)/load2/cuserid.o /opt/langtools/lib/crt0.o /opt/langtools/lib/end.o 
+SPEC_EXT_OBJ=
+EXT_OBJ=$(SYS_EXT_OBJ) $(SPEC_EXT_OBJ)
+
+# Include directories 
+CMS_IFLAGS=-I$(CMS_PATH)/include1
+BC_IFLAGS=-I$(CMS_PATH)/include2
+
+# b_cgen, wisp & disam load modules
+CMS_DIR=-L$(CMS_PATH)/load2 
+CMS_LIB=-lasm -lscrn -lfile -lmat -lwb -lutil -lcmath -lutil -lasm -ldisam \
+-ldewisp
+
+# CMS Subroutine load libraries
+CMSSUB_DIR=-L$(CMS_PATH)/load1 
+CMSSUB_LIBX=	\
+  -ll1asr2       -ll1ass2       -ll1ass3       -ll1bss2       -ll1css2        \
+  -ll1dss2       -ll1ess2       -ll2asr2       -ll2asr3       -ll2ass2        \
+  -ll2ass3       -ll2bss2       -ll2css2       -ll3asr2       -ll3ass2        \
+  -ll3ass3       -ll4asr2       -ll4asr3       -ll4ass2       -ll4ass3        \
+  -ll5asr2       -ll5asr3       -ll5ass2       -ll5ass3       -ll6asr3        \
+  -ll6ass2       -ll6ass3       -ll7asr3       -ll7ass3       -ll8asr3        \
+  -ll8ass3       -ll9asr2       -ll9ass3       -llaasr3       -llaass2        \
+  -llaass3       -llbass3       -llcass3       -lldasr2       -lldasr3        \
+  -lldass2       -lldass3       -llpacss       -llxacss       
+
+CMSSUB_LIB=$(CMSSUB_LIBX) $(CMSSUB_LIBX) $(CMSSUB_LIBX) $(CMSSUB_LIBX)
+
+# Define the Combined Parameters
+
+CMSPATH= \
+	$(CMS_PATH)
+
+# System libraries
+M_LIB=-lcurses -lm -lc -ldld
+
+# Define the Combined Parameters
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+LD_DIRS=$(CMSSUB_DIR) $(CMS_DIR)
+LD_LIBS=$(CMSSUB_LIB) $(CMS_LIB) $(M_LIB)
+
+#Current b_cgen location 
+#Note: -f embeds basic source in generated c as comments, aids debugging
+
+COMPILE=$(CMS_PATH)/b_cgen -f
+
+#Desired location of executable file, (Intermediates (c,h,o) stay in source lib)
+#Provided is 'here'.
+
+OBJ=./
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas
+
+#	Define the steps from .bas to .c
+.bas.c:	
+	@echo  == Using .bas to .c rule  ==
+	$(COMPILE) ./$*
+
+#	Define the steps from .bas to .o
+.bas.o:	
+	@echo  == Using .bas to .o rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c
+
+#	Define the steps from .bas to executable
+.bas:
+	@echo  == Using .bas to executable rule  ==
+	$(COMPILE) ./$*
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+# Define the steps from .c to .o
+.c.o:
+	@echo  == Using .c to .o rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+
+# Define the steps from .c to executable
+.c:
+	@echo  == Using .c to executable rule  ==
+	$(CC) -c $(CFLAGS) $(INC_FLAGS) ./$*.c 
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+# Define the steps from .o to executable
+.o:
+	@echo  == Using .o to executable rule  ==
+	$(LD) ./$*.o $(EXT_OBJ) $(LDFLAGS) $(LD_DIRS) $(LD_LIBS) -o $(OBJ)$@
+
+all:
+
+clean:
+	rm -rf ./*.x ./*.b ./*.d ./core

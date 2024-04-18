@@ -1,0 +1,12 @@
+barcodes.o
+bckprefx.o
+cusappnd.o
+fmtkey.o
+fmtkeyck.o
+genscrn.o
+genslct.o
+hnyappnd.o
+rperiods.o
+setsep.o
+slctpass.o
+withhold.o

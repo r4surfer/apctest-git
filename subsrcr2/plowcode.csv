@@ -1,0 +1,135 @@
+/*
+ plowcode: Tue Nov 25 10:11:55 1997
+ */
+
+/* CALLED SUBPROGRAM */
+#include "wvsb.h"
+
+PLOWCODE (ARG1_DS, ARG2_DS, ARG3_DS, ARG4_DS, ARG5_DS, ARG6_DS, ARG7_DS, ARG8_DS, ARG9_DS, ARG10_DS, ARG11_DS, ARG12_DS, ARG13_DS, ARG14_DS, ARG15_DS)
+struct symbol *ARG1_DS;
+struct symbol *ARG2_DS;
+struct symbol *ARG3_DS;
+struct symbol *ARG4_DS;
+struct symbol *ARG5_DS;
+struct symbol *ARG6_DS;
+struct symbol *ARG7_DS;
+struct symbol *ARG8_DS;
+struct symbol *ARG9_DS;
+struct symbol *ARG10_DS;
+struct symbol *ARG11_DS;
+struct symbol *ARG12_DS;
+struct symbol *ARG13_DS;
+struct symbol *ARG14_DS;
+struct symbol *ARG15_DS;
+{
+
+/* #include "plowcode.h" */
+
+/* Declare and initialize the local variables */
+	int g_ret;
+	int g_argcnt = 0;
+
+static char CMS2V_ts[50];
+static struct symbol CMS2V_TS ={(long) 1, (char *)  CMS2V_ts, 50, 0, 0, 0, 50, 50};
+static struct symbol *allvar[]={
+&CMS2V_TS,
+NULL};
+static struct ufb *ufbptr[64]={
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+static int Iflag = 1;
+static int G_hold;
+
+extern int Call_args;	/* count of callers args */
+int CMS_nargs = Call_args;	/* Local var to keep nargs */
+
+/* local BCD & int pointers to callers parms */
+	long *ARG1_ds;
+	long *ARG2_ds;
+	long *ARG3_ds;
+	long *ARG4_ds;
+	long *ARG5_ds;
+	long *ARG6_ds;
+	long *ARG7_ds;
+	long *ARG8_ds;
+	long *ARG9_ds;
+	long *ARG10_ds;
+	long *ARG11_ds;
+	long *ARG12_ds;
+	long *ARG13_ds;
+	long *ARG14_ds;
+	long *ARG15_ds;
+
+/* set the Str COMs */
+
+	g_cidx = 0L;
+
+/* Set pointers to callers parms */
+	if ((Call_args >= 1) && (ARG1_DS != NULL))
+		ARG1_ds = (long *) *( (long *) ARG1_DS + 1);
+	if ((Call_args >= 2) && (ARG2_DS != NULL))
+		ARG2_ds = (long *) *( (long *) ARG2_DS + 1);
+	if ((Call_args >= 3) && (ARG3_DS != NULL))
+		ARG3_ds = (long *) *( (long *) ARG3_DS + 1);
+	if ((Call_args >= 4) && (ARG4_DS != NULL))
+		ARG4_ds = (long *) *( (long *) ARG4_DS + 1);
+	if ((Call_args >= 5) && (ARG5_DS != NULL))
+		ARG5_ds = (long *) *( (long *) ARG5_DS + 1);
+	if ((Call_args >= 6) && (ARG6_DS != NULL))
+		ARG6_ds = (long *) *( (long *) ARG6_DS + 1);
+	if ((Call_args >= 7) && (ARG7_DS != NULL))
+		ARG7_ds = (long *) *( (long *) ARG7_DS + 1);
+	if ((Call_args >= 8) && (ARG8_DS != NULL))
+		ARG8_ds = (long *) *( (long *) ARG8_DS + 1);
+	if ((Call_args >= 9) && (ARG9_DS != NULL))
+		ARG9_ds = (long *) *( (long *) ARG9_DS + 1);
+	if ((Call_args >= 10) && (ARG10_DS != NULL))
+		ARG10_ds = (long *) *( (long *) ARG10_DS + 1);
+	if ((Call_args >= 11) && (ARG11_DS != NULL))
+		ARG11_ds = (long *) *( (long *) ARG11_DS + 1);
+	if ((Call_args >= 12) && (ARG12_DS != NULL))
+		ARG12_ds = (long *) *( (long *) ARG12_DS + 1);
+	if ((Call_args >= 13) && (ARG13_DS != NULL))
+		ARG13_ds = (long *) *( (long *) ARG13_DS + 1);
+	if ((Call_args >= 14) && (ARG14_DS != NULL))
+		ARG14_ds = (long *) *( (long *) ARG14_DS + 1);
+	if ((Call_args >= 15) && (ARG15_DS != NULL))
+		ARG15_ds = (long *) *( (long *) ARG15_DS + 1);
+
+
+	wb_init (&Iflag, allvar, NULL);	/* init for sub program */
+	G_hold = G_scnt;		/* hold the stack count */
+/* 000001 */
+/* 000111 */
+/* 000114 */
+/* 000118 */
+	str_asgn ("R6.00.04 02/23/91 BASIC 4.03.01 & SSL Support     ", (long) 50 , 
+		CMS2V_ts, (long) 50 );
+/* 000119 */
+/* 000121 */
+	wb_close (1, WS);
+/* 000123 */
+	/* Call_args = 15; */
+	ZPLOWCOD (ARG1_DS, ARG2_DS, ARG3_DS, ARG4_DS, ARG5_DS, ARG6_DS, ARG7_DS, ARG8_DS, ARG9_DS, ARG10_DS, ARG11_DS, ARG12_DS, ARG13_DS, ARG14_DS, ARG15_DS);
+/* 000127 */
+	G_scnt = G_hold;	/* restore stack count */
+	return (0);
+#ifdef END
+#undef END
+#endif
+END:
+	G_scnt = G_hold;	/* restore stack count */
+	return  (0);
+
+
+	/* NO GOSUBS SO NO RETURN TABLE*/
+}
+/* END OF plowcode */
+

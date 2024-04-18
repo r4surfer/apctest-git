@@ -1,0 +1,118 @@
+#	b_cgen makefile
+# makefile for 'c' generation, COMPILE Sub Source Programs!
+#  Exclusive for programs in SUB Source output to .o objects
+
+
+# Set up the variables
+include ../optcode
+CFLAGS=-c -Ae $(OPTCODE) +z -D_HPUX_SOURCE
+
+OS2=../subsrce2_o
+OS3=../subsrce3_o
+OR2=../subsrcr2_o
+OR3=../subsrcr3_o
+OCUSTSUBS=../custsubs_o
+OPRESUBS=../presubs_o
+
+# Location for the stored objects to be shipped.
+OBJ= \
+	../custssx_o
+
+
+INCPATH=-I../
+CMS_IFLAGS=$(INCPATH)include1
+BC_IFLAGS=$(INCPATH)include2
+
+# Combined Include Directories
+INC_FLAGS=$(CMS_IFLAGS) $(BC_IFLAGS)
+
+COMPILE=../b_cgen
+
+.SUFFIXES:
+.SUFFIXES:	.a .o .c .bas .csv .c.sav
+
+#	Define the steps from .bas to .o
+.bas:
+	@echo  == Using .bas to .o rule  ==
+	$(COMPILE) ./$*
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+# Define the steps from .c to .o
+.c:
+	@echo  == Using .c to .o rule  ==
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+
+#	Define the steps from .csv to .o
+.csv:	
+	@echo  == Using .csv to .o rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.csv >> ./$*.c
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+#	Define the steps from .c.sav to .o
+.c.sav:	
+	@echo  == Using .c.sav to .o rule  ==
+	rm -f ./$*.c
+	touch ./$*.c
+	cat ./$*.c.sav >> ./$*.c
+	$(CC) $(CFLAGS) $(INC_FLAGS) ./$*.c
+	mv ./$*.o $(OBJ)
+	rm -f ./$*.?
+
+all:	target	\
+  apcbarem       apcbfgnd       apcblsub       apcbomcp       apcbomed        \
+  apccalsb       apccs1sb       apccs2sb       apccs3sb       apccs4sb        \
+  apccs5sb       apccst0b       apccst1b       apccst2b       apccst3b        \
+  apccst4b       apccst5b       apccst6b       apccst9b       apccstcc        \
+  apccstwg       apccutcc       apccutld       apccutmm       apcdate         \
+  apcdescr       apcedi03       apcedipo       apcediqt       apceff1b        \
+  apceffwg       apcemp1b       apcemp2b       apcfaxsd       apcgslit        \
+  apchnysb       apcinvsb       apcivsub       apclabtt       apcldsub        \
+  apcpassw       apcpause       apcpipsb       apcpl042       apcpl10b        \
+  apcpl11b       apcpl142       apcpl1db       apcpl2db       apcpl3ab        \
+  apcpl3sb       apcpl41b       apcpl41c       apcpl43a       apcpla47        \
+  apcplb40       apcplb42       apcplb44       apcplb45       apcplc40        \
+  apcplc42       apcplc44       apcplc45       apcpld42       apcpld44        \
+  apcpld45       apcple42       apcple45       apcplf42       apcplf45        \
+  apcplg42       apcplh42       apcpli42       apcplj42       apcplk42        \
+  apcpll42       apcplm42       apcpln0b       apcpln1b       apcpln2b        \
+  apcpln3b       apcpln5b       apcpln6b       apcpln7b       apcpln8b        \
+  apcpln9b       apcplndd       apcplndv       apcplo42       apcplp42        \
+  apcplq42       apcplr42       apcpls42       apcplt42       apcpltxt        \
+  apcplu42       apcplv42       apcplw42       apcplx42       apcply42        \
+  apcplz42       apcpost        apcpr0sb       apcpr1sb       apcpr2sb        \
+  apcpr3sb       apcpr4sb       apcpr5sb       apcprsub       apcprwfb        \
+  apcprxsb       apcprysb       apcprzsb       apcpulsb       apcrg21b        \
+  apcrg22b       apcrg23b       apcrg24b       apcrg25b       apcrg26b        \
+  apcrg27b       apcrg28b       apcrg29b       apcrga1b       apcrga23        \
+  apcrga2b       apcrga3b       apcrga4b       apcrga5b       apcrga6b        \
+  apcrga7b       apcrga8b       apcrga9b       apcrolsb       apcrpsub        \
+  apcscan2       apcscnsb       apcsls1        apcsls2        apcsls3         \
+  apcsls4        apcsls5        apcsosub       apctime        apcvenlb        \
+  ariprsu2       ariprsu3       compress       connect        discnnct        \
+  error          ewdaging       ewdbarem       ewdeff1b       ewdeffga        \
+  ewdftp01       ewdglssb       ewdlogup       ewdmdy         ewdnomsz        \
+  ewdopen        ewdpla42       ewdpla44       ewdpla58       ewdpla59        \
+  ewdpla60       ewdpla63       ewdpla65       ewdpla66       ewdpla67        \
+  ewdpla69       ewdpla71       ewdpla72       ewdpla73       ewdpla77        \
+  ewdplb42       ewdplb58       ewdplb59       ewdplb60       ewdplb66        \
+  ewdplb72       ewdplb73       ewdplb77       ewdplc42       ewdplc58        \
+  ewdplc72       ewdplc73       ewdpld72       ewdpln6b       ewdshape        \
+  ewdsleep       ewdtbasb       ewduglgb       ewdugqtb       ewdugslb        \
+  ewdusrvl       ewdwgupd       expand         fetch          fieldinf        \
+  flush          getfield       purprint       query          
+
+target:
+	(if ( test ! -d $(OBJ) ) then       \
+		mkdir $(OBJ);               \
+	fi)
+
+
+clean:
+	rm -f ./*.? ./core

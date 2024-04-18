@@ -1,0 +1,51 @@
+#	b_cgen Subroutine makefile
+# This makefile is for SUBSources exclusively
+#
+# Use for custom or prerelease subroutines / variable target libraries
+#
+# Contains generic rule for each subroutine
+# target = normal _o & compiled for static linkage
+#
+#suba:
+#	$(COMPILE) ./$@
+#	$(CC) $(CFLAGSC) $(INC_FLAGS) ./$@.c
+#	mv ./$@.o $(OBJ)/$@.o
+#	rm -f ./$@.?
+#
+# Custom variations might concern 1) source type
+# 	.c source:
+#
+#suba:
+#	$(CC) $(CFLAGSC) $(INC_FLAGS) ./$@.c
+#	mv ./$@.o $(OBJ)/$@.o
+# NOTE NO 'rm' LINE!!!!
+#
+#	.c.sav source:
+#
+#suba:
+#	rm -f ./$@.c
+#	touch ./$@.c
+#	cat ./$@.c.sav >> ./$@.c
+#	$(CC) $(CFLAGSC) $(INC_FLAGS) ./$@.c
+#	mv ./$@.o $(OBJ)/$@.o
+#	rm -f ./$@.?
+#
+# For a shared library target, use CFLAGSS and choose the appropriate target
+#
+#suba:
+#	$(COMPILE) ./$@
+#	$(CC) $(CFLAGSS) $(INC_FLAGS) ./$@.c
+#	mv ./$@.o $(OS2)/$@.o
+#	rm -f ./$@.?
+#
+
+include ../makeutil/optcode
+CFLAGSC=-c -Ae $(OPTCODE) -D_HPUX_SOURCE
+CFLAGSS=-c -Ae $(OPTCODE) +z -D_HPUX_SOURCE
+
+OS2=../subsrce2_o
+OS3=../subsrce3_o
+OR2=../subsrcr2_o
+OR3=../subsrcr3_o
+OCUSTSUBS=../custsubs_o
+OPRESUBS=../presubs_o

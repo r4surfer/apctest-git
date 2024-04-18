@@ -1,0 +1,59 @@
+#!/bin/sh
+
+while [ -z "$CURRDIR" ]
+do
+	echo 'Remove Executable Programs - Enter Direcory [full path]'
+	read CURRDIR 
+done
+
+if [ ! -d "$CURRDIR" ]
+then
+	echo 'not a directory'; exit
+fi
+
+echo 'Remove executable programs from '$CURRDIR' [y]es or [i]nteractive'
+read RESP
+
+if [ ! "$RESP" = 'y' ] && [ ! "$RESP" = 'i' ]
+then
+	exit
+fi
+
+echo 'working ...'
+for FILENAME in `ls $CURRDIR/proc*`
+do
+	if [ -x "$FILENAME" ]
+	then
+		if [ ! -h "$FILENAME" ]
+		then
+			chmod 444 $FILENAME
+		fi
+	fi
+done
+
+for FILENAME in `ls $CURRDIR`
+do
+	if [ -x "$CURRDIR/$FILENAME" ]
+	then
+		if [ ! -h "$CURRDIR/$FILENAME" ]
+		then
+			echo "$FILENAME is an executable"
+			if [ "$RESP" = 'i' ]
+			then
+				rm -i $CURRDIR/$FILENAME
+			else
+				rm -f $CURRDIR/$FILENAME
+			fi
+		fi
+	fi
+done
+
+echo 'working ...'
+for FILENAME in `ls $CURRDIR/proc*`
+do
+	if [ ! -h "$FILENAME" ]
+	then
+		chmod 555 $FILENAME
+	fi
+done
+

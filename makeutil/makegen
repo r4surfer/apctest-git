@@ -1,0 +1,5 @@
+all:
+	ls . > ./flist1.txt
+	../genlist -so
+	cat ../s0o_smake ./flist2.txt > ./makefile 
+	rm ./flist*

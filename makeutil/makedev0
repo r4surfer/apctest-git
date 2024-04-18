@@ -1,0 +1,17 @@
+#	b_cgen makefile
+#
+# For use in development - should reside in development source library.
+# Assumes standard location of b_cgen, b_cgen components & CMS subs.
+# Custom subs (static linkage) may reside in development library.
+#
+# Stepped makes support bas to executable & anything in between.
+# No clean-up is performed after these makes to allow debugging
+# & more efficient development.
+# For instance, when working on a subroutine, make the driver to .o,
+# then fully make the sub each time, but only re-link the driver.
+# The .c .h .o are left behind for use in xdb, but this may require
+# strategic use of touch & remove to recompile & relink properly.
+
+# Path to normal b_cgen, its components & application subs
+
+CMS_PATH= \
